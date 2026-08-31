@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
  * captures its result. Uses `proc_open` with an argv array (no shell, no
  * interpolation) so a command/arg can't be turned into shell injection.
  *
- * Watch-outs carried from taw-site-manager's Part 6 notes:
+ * Watch-outs carried from taw-hub's Part 6 notes:
  *  - CWD must be the theme root (where `bin/taw` lives).
  *  - The PHP binary is discovered (`PHP_BINARY`), never hard-coded.
  *  - Some `taw` commands boot WordPress (`inspect`, `fields:*`) → nested

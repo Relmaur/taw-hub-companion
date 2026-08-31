@@ -1,6 +1,6 @@
 {
     "name": "taw/hub-companion",
-    "description": "TAW Hub Companion — the signed wp-json/taw-hub/v1 receiver a TAW WordPress site exposes to the taw-site-manager control hub.",
+    "description": "TAW Hub Companion — the signed wp-json/taw-hub/v1 receiver a TAW WordPress site exposes to the taw-hub control hub.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "authors": [

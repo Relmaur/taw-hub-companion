@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name:       TAW Hub Companion
- * Description:        Signed wp-json/taw-hub/v1 receiver for the TAW Site Manager control hub. No passwords — every request is verified against the Hub's Ed25519 key per taw-site-manager ADR-0003.
+ * Description:        Signed wp-json/taw-hub/v1 receiver for the TAW Hub control hub. No passwords — every request is verified against the Hub's Ed25519 key per taw-hub ADR-0003.
  * Version:           0.1.0
  * Requires at least: 6.4
  * Requires PHP:      8.2

@@ -18,7 +18,7 @@ use TAW\HubCompanion\Wire\VerificationException;
 /**
  * Cross-implementation parity against the Hub's own signer. The fixture
  * (tests/fixtures/hub-signing-vectors.json) is generated from
- * taw-site-manager's `SignedMessage` / `Ed25519Signer` / `HmacSha256Signer`
+ * taw-hub's `SignedMessage` / `Ed25519Signer` / `HmacSha256Signer`
  * — if these pass, both implementations agree on the wire.
  *
  * Regenerate the fixture on the Hub side (never hand-edit); a canonical

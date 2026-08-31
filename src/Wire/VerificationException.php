@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 /**
  * Thrown by {@see SignatureGate} / {@see SignatureHeaders} when a request
  * fails verification. {@see self::reason()} is one of the stable slugs from
- * taw-site-manager ADR-0003 — it is safe to expose in the 401 body and MUST
+ * taw-hub ADR-0003 — it is safe to expose in the 401 body and MUST
  * NOT leak internal detail.
  */
 final class VerificationException extends \RuntimeException

@@ -9,7 +9,7 @@ use TAW\HubCompanion\Wire\CanonicalString;
 
 /**
  * The canonical string is a frozen wire contract shared with the Hub
- * (taw-site-manager ADR-0003 / docs/reference/wire-protocol.md). These tests
+ * (taw-hub ADR-0003 / docs/reference/wire-protocol.md). These tests
  * pin it byte-for-byte — a change here is a deliberate `TAW-HUB-v1` → `v2`.
  */
 final class CanonicalStringTest extends TestCase

@@ -1,9 +1,11 @@
 # TAW Hub Companion
 
 The signed `wp-json/taw-hub/v1/` receiver a TAW-framework WordPress site exposes to the
-[**TAW Site Manager**](https://github.com/Relmaur/taw-site-manager) control hub. No
-passwords — every request is verified against the Hub's Ed25519 key per the Hub's
-**ADR-0003** wire protocol.
+[**TAW Hub**](https://github.com/Relmaur/taw-hub) control hub. No passwords — every request
+is verified against the Hub's Ed25519 key per the Hub's
+[**ADR-0003**](https://github.com/Relmaur/taw-hub/blob/main/docs/ADR/0003-wire-protocol-and-signatures.md)
+wire protocol. Plugin architecture:
+[**ADR-0005**](https://github.com/Relmaur/taw-hub/blob/main/docs/ADR/0005-companion-plugin-architecture.md).
 
 > Was briefly `TAW\Hub` inside `taw/core` v1.20.0. That was the wrong home (theme framework
 > ≠ fleet-management control plane) and the wrong protocol (independently invented, not
@@ -87,17 +89,18 @@ composer run test      # PHPUnit 11 + brain/monkey — no WordPress needed
 composer run phpstan   # level max, szepeviktor/phpstan-wordpress
 ```
 
-`tests/Unit/Wire/` is the wire contract; `CanonicalStringTest` is pinned to ADR-0003's
-worked example. A cross-implementation vector file from the Hub's `tests/Support/HubSigning.php`
-drops into `tests/fixtures/hub-vectors.json`.
+`tests/Unit/Wire/` is the wire contract. `CanonicalStringTest` is pinned to ADR-0003's
+worked example; `SigningVectorsTest` runs `tests/fixtures/hub-signing-vectors.json` (copied
+from the Hub) through `SignatureGate` for full cross-implementation parity — re-copy that
+file if the Hub ever regenerates it.
 
-## Coordination open questions (for ADR-0005)
+## Settled by ADR-0005
 
-- Does `TAW_HUB_KEY_ID` name the **Hub's** inbound key id (this implementation) or override
-  the **site's** own response key id? (Currently: inbound; site override is `TAW_HUB_SITE_KEY_ID`.)
-- Does the Hub's `HealthSnapshot::fromResponse` tolerate the extra `site_public_key` /
-  `site_key_id` keys?
-- The signed response body is `wp_json_encode($data)` — confirm the Hub hashes the exact
-  bytes it receives (slash/unicode escaping parity).
-- `/assets/sync` is **not** implemented — the Hub's `SyncTawViteAssets` is deferred and has
-  no caller yet.
+- `TAW_HUB_KEY_ID` is the **Hub's** inbound key id (defaults to `hub-local`); the site's own
+  id is auto-generated `site-<random>`, overridable with `TAW_HUB_SITE_KEY_ID`.
+- `HealthSnapshot::fromResponse` ignores unknown keys, so `/health` carries `site_public_key`
+  + `site_key_id` for the registration handshake.
+- The Hub hashes the exact received response bytes; the plugin signs precisely its
+  `wp_json_encode($data)` output.
+- `/assets/sync` is **not** implemented — the Hub's `SyncTawViteAssets` is deferred until
+  Vite bundle-pinning is designed (a future ADR).

@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
 
 /**
  * Builds the exact byte string both the Hub and this plugin sign, per
- * taw-site-manager ADR-0003 (`docs/reference/wire-protocol.md`):
+ * taw-hub ADR-0003 (`docs/reference/wire-protocol.md`):
  *
  *   TAW-HUB-v1 \n
  *   {METHOD}                      upper-case HTTP verb, or the literal RESPONSE
