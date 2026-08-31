@@ -1,0 +1,43 @@
+{
+    "name": "taw/hub-companion",
+    "description": "TAW Hub Companion — the signed wp-json/taw-hub/v1 receiver a TAW WordPress site exposes to the taw-site-manager control hub.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Marco Del Riego",
+            "email": "marck94zac1@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-sodium": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11",
+        "brain/monkey": "^2.6",
+        "phpstan/phpstan": "^2.2",
+        "szepeviktor/phpstan-wordpress": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TAW\\HubCompanion\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TAW\\HubCompanion\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.2"
+        }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse --memory-limit=-1",
+        "test": "phpunit"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
