@@ -32,11 +32,13 @@ final class Config
     }
 
     /**
-     * Expected inbound `X-Taw-Hub-Key-Id` for the Ed25519 channel; null → accept any.
+     * Expected inbound `X-Taw-Hub-Key-Id` for the Ed25519 channel. Defaults to
+     * `hub-local` — the Hub's own default key id (ADR-0005) — so a
+     * defaults-only pairing works and the id is still checked.
      */
-    public function hubKeyId(): ?string
+    public function hubKeyId(): string
     {
-        return self::nonEmptyString(self::constant('TAW_HUB_KEY_ID'));
+        return self::nonEmptyString(self::constant('TAW_HUB_KEY_ID')) ?? 'hub-local';
     }
 
     public function hmacSecret(): ?string

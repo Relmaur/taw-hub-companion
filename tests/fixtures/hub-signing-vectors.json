@@ -1,0 +1,168 @@
+{
+    "_meta": {
+        "generated_by": "scripts/gen-signing-vectors.php \u2014 do not hand-edit",
+        "spec": "docs/ADR/0003-wire-protocol-and-signatures.md",
+        "scheme": "TAW-HUB-v1",
+        "canonical_layout": "{SCHEME}\\n{METHOD}\\n{PATH}\\n{TIMESTAMP}\\n{NONCE}\\n{sha256hex(body)}  \u2014 no trailing newline",
+        "drift_seconds": 60,
+        "replay_ttl_seconds": 150,
+        "signature_encoding": "base64 of raw signature bytes (ed25519 = 64, hmac-sha256 = 32)",
+        "response_direction": "METHOD is the literal 'RESPONSE'; PATH is the request's signed path; the site signs with its own key",
+        "key_b64": "ed25519 vectors: the base64 public key. hmac-sha256 vectors: the shared secret."
+    },
+    "keys": {
+        "hub_ed25519": {
+            "key_id": "hub-local",
+            "public_key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "secret_key_b64": "KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioZf2sj4WyFMsaryDj6zV6nib4MdrKSAzQDm/qLPTaNYQ==",
+            "seed_hex": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a"
+        },
+        "site_ed25519": {
+            "key_id": "site-01hbtesttesttesttesttest",
+            "public_key_b64": "a3NKjv8kb+c0s41ARsFI7uXwT+h7OgpCOVWneVbeBms=",
+            "secret_key_b64": "W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1trc0qO/yRv5zSzjUBGwUju5fBP6Hs6CkI5Vad5Vt4Gaw==",
+            "seed_hex": "5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b"
+        },
+        "hmac_sha256": {
+            "key_id": "n8n",
+            "shared_secret": "taw-hub-test-hmac-secret"
+        }
+    },
+    "vectors": [
+        {
+            "name": "get_health_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "GET",
+            "path": "/wp-json/taw-hub/v1/health",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "",
+            "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "canonical_string": "TAW-HUB-v1\nGET\n/wp-json/taw-hub/v1/health\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "L/XmWphVWM/bC/9NQzR2II1gFD8CbmyeYr7rF8DaJ0nfSLOzfuXJJfGd3K0LmdcfYhxTPfQLJt6O2CBEJy++Cg==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "L/XmWphVWM/bC/9NQzR2II1gFD8CbmyeYr7rF8DaJ0nfSLOzfuXJJfGd3K0LmdcfYhxTPfQLJt6O2CBEJy++Cg=="
+            },
+            "expect": "valid"
+        },
+        {
+            "name": "post_framework_sync_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "POST",
+            "path": "/wp-json/taw-hub/v1/framework/sync",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "{\"dry_run\":false}",
+            "body_sha256": "2775d838d7a33d9c8c83184a520a27d8a3c95aba878ff39351e69503dae18f50",
+            "canonical_string": "TAW-HUB-v1\nPOST\n/wp-json/taw-hub/v1/framework/sync\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\n2775d838d7a33d9c8c83184a520a27d8a3c95aba878ff39351e69503dae18f50",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "aK6xm0PaTJpjom0v37YcziCmwwXp9ruUaYe3VqQroDGBK4G6rizErBNWsxPZ63IT+WZgxgX1/S7mvo2phFqzDg==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "aK6xm0PaTJpjom0v37YcziCmwwXp9ruUaYe3VqQroDGBK4G6rizErBNWsxPZ63IT+WZgxgX1/S7mvo2phFqzDg=="
+            },
+            "expect": "valid"
+        },
+        {
+            "name": "post_taw_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "POST",
+            "path": "/wp-json/taw-hub/v1/taw",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "{\"command\":\"inspect\",\"args\":[]}",
+            "body_sha256": "8c3e2a8a51d8a57bbd2d3ec2a866267eeb3d408a56de9ec8d0f10ff292ca30f7",
+            "canonical_string": "TAW-HUB-v1\nPOST\n/wp-json/taw-hub/v1/taw\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\n8c3e2a8a51d8a57bbd2d3ec2a866267eeb3d408a56de9ec8d0f10ff292ca30f7",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "qH8Fmsaq/mo7daHZO2F/tQLQY/SaPm9fuJAUvwqtm517aT95pm7/rOmXUkG+2Fw0esWHr5506vfOYxZ2YPewBg==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "qH8Fmsaq/mo7daHZO2F/tQLQY/SaPm9fuJAUvwqtm517aT95pm7/rOmXUkG+2Fw0esWHr5506vfOYxZ2YPewBg=="
+            },
+            "expect": "valid"
+        },
+        {
+            "name": "post_escalation_hmac_sha256",
+            "algo": "hmac-sha256",
+            "key_id": "n8n",
+            "method": "POST",
+            "path": "/webhook/escalate",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "{\"event\":\"agent.escalation\",\"issue_id\":\"TAW-1234\",\"attempts\":3}",
+            "body_sha256": "df626dd3b370d5bc1b4372a2402725678cbd8424429b895e888ca54ea884b56d",
+            "canonical_string": "TAW-HUB-v1\nPOST\n/webhook/escalate\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\ndf626dd3b370d5bc1b4372a2402725678cbd8424429b895e888ca54ea884b56d",
+            "key_b64": "taw-hub-test-hmac-secret",
+            "signature_b64": "YXt5HWa6WdXDSqxFs8x/hOf9wwaLqdBXpsatmBAp5N8=",
+            "headers": {
+                "X-Taw-Hub-Algo": "hmac-sha256",
+                "X-Taw-Hub-Key-Id": "n8n",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "YXt5HWa6WdXDSqxFs8x/hOf9wwaLqdBXpsatmBAp5N8="
+            },
+            "expect": "valid"
+        },
+        {
+            "name": "response_health_ed25519",
+            "algo": "ed25519",
+            "key_id": "site-01hbtesttesttesttesttest",
+            "method": "RESPONSE",
+            "path": "/wp-json/taw-hub/v1/health",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "{\"ok\":true,\"php_version\":\"8.3.10\",\"wp_version\":\"6.6.1\",\"taw_core_version\":\"1.20.1\",\"companion_version\":\"0.1.0\"}",
+            "body_sha256": "b1641a7b81506b9fa27a6b1631c5395be3578db56096fce12bdf10ad97b4f0b7",
+            "canonical_string": "TAW-HUB-v1\nRESPONSE\n/wp-json/taw-hub/v1/health\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\nb1641a7b81506b9fa27a6b1631c5395be3578db56096fce12bdf10ad97b4f0b7",
+            "key_b64": "a3NKjv8kb+c0s41ARsFI7uXwT+h7OgpCOVWneVbeBms=",
+            "signature_b64": "El65y7i+cKmU4lQnVrxif0rr9o8ESO6swe9EnwLOroewnOcN/eJNk3tw7aVcnCDfGjAU44V6NSFsX+HMbv02Ag==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "site-01hbtesttesttesttesttest",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "El65y7i+cKmU4lQnVrxif0rr9o8ESO6swe9EnwLOroewnOcN/eJNk3tw7aVcnCDfGjAU44V6NSFsX+HMbv02Ag=="
+            },
+            "expect": "valid"
+        },
+        {
+            "name": "tampered_body_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "POST",
+            "path": "/wp-json/taw-hub/v1/framework/sync",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "{\"dry_run\":true}",
+            "body_sha256": "ef516a07232a3a570c5d67706444a502befef09f34321cbae8223ea1fccf0c42",
+            "canonical_string": "TAW-HUB-v1\nPOST\n/wp-json/taw-hub/v1/framework/sync\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\nef516a07232a3a570c5d67706444a502befef09f34321cbae8223ea1fccf0c42",
+            "signed_canonical_string": "TAW-HUB-v1\nPOST\n/wp-json/taw-hub/v1/framework/sync\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\n2775d838d7a33d9c8c83184a520a27d8a3c95aba878ff39351e69503dae18f50",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "aK6xm0PaTJpjom0v37YcziCmwwXp9ruUaYe3VqQroDGBK4G6rizErBNWsxPZ63IT+WZgxgX1/S7mvo2phFqzDg==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "aK6xm0PaTJpjom0v37YcziCmwwXp9ruUaYe3VqQroDGBK4G6rizErBNWsxPZ63IT+WZgxgX1/S7mvo2phFqzDg=="
+            },
+            "expect": "invalid",
+            "reason": "invalid_signature",
+            "note": "signature is over {\"dry_run\":false}; the wire body is {\"dry_run\":true}. The verifier recomputes the canonical from the wire body, so the crypto check fails."
+        }
+    ]
+}
