@@ -35,12 +35,20 @@ admin notice explains what to define.
 
 ## Routes (`taw-hub/v1`)
 
-| Method | Route | Body | Returns |
+| Method | Route | Body / query | Returns |
 |---|---|---|---|
 | `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id }` |
+| `GET` | `/logs` | `?limit&level&code&since` | `{ count, entries: [...] }` — the structured log `taw/core` writes |
 | `POST` | `/framework/sync` | `{ "dry_run": bool }` | the `php bin/taw sync --json` report verbatim |
 | `POST` | `/taw` | `{ "command": string, "args": string[] }` | `{ exit_code, stdout, stderr }` — allow-listed commands only |
 | `POST` | `/keys/rotate` | — | `{ "public_key": "<base64>" }` — new keypair, same key id |
+
+`/logs` serves the JSON-Lines file `taw/core`'s `TAW\Core\Log\Logger` writes to
+`wp-content/taw-logs/` — read-only, so the Hub can report on a site without SSH. `limit`
+caps at 500 (default 100); `level` ∈ `debug|info|notice|warning|error|critical`; `code` is a
+prefix match; `since` is an ISO-8601 timestamp. Empty `entries` if `taw/core` is old or has
+never logged. The reader (`src/Logs/LogReader.php`) is a small standalone reimplementation,
+not a `taw/core` dependency — same decoupling rationale as `TawRunner`.
 
 `/taw` allow-list (filter `taw_hub_companion_taw_allowlist` to change):
 `sync inspect seo:extract seo:inject icons:sync export:static`. **Not** `fields:set`, **not**

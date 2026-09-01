@@ -10,8 +10,10 @@ use TAW\HubCompanion\Http\ResponseSigning;
 use TAW\HubCompanion\Http\SignatureGuard;
 use TAW\HubCompanion\Keys\SiteKeypair;
 use TAW\HubCompanion\Rest\FrameworkSyncController;
+use TAW\HubCompanion\Logs\LogReader;
 use TAW\HubCompanion\Rest\HealthController;
 use TAW\HubCompanion\Rest\KeysController;
+use TAW\HubCompanion\Rest\LogsController;
 use TAW\HubCompanion\Rest\Routes;
 use TAW\HubCompanion\Rest\TawController;
 use TAW\HubCompanion\Telemetry\HealthReport;
@@ -65,6 +67,7 @@ final class Plugin
         $routes = new Routes(
             $guard,
             new HealthController(new HealthReport($keypair)),
+            new LogsController(LogReader::default()),
             new FrameworkSyncController($runner),
             new TawController($runner),
             new KeysController($keypair),
