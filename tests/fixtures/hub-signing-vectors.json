@@ -52,6 +52,28 @@
             "expect": "valid"
         },
         {
+            "name": "get_logs_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "GET",
+            "path": "/wp-json/taw-hub/v1/logs",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "",
+            "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "canonical_string": "TAW-HUB-v1\nGET\n/wp-json/taw-hub/v1/logs\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "nnOcSiorCEoSlnIY3/ztD+QQua62s9ugY9sb6q1SAnAKtV6/rcUOtHo/ERTQO0nlGmyvv21EM8yRFu/jIc9CCw==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "nnOcSiorCEoSlnIY3/ztD+QQua62s9ugY9sb6q1SAnAKtV6/rcUOtHo/ERTQO0nlGmyvv21EM8yRFu/jIc9CCw=="
+            },
+            "expect": "valid"
+        },
+        {
             "name": "post_framework_sync_ed25519",
             "algo": "ed25519",
             "key_id": "hub-local",
