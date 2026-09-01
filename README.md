@@ -37,7 +37,7 @@ admin notice explains what to define.
 
 | Method | Route | Body / query | Returns |
 |---|---|---|---|
-| `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id }` |
+| `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id, exec_available }` |
 | `GET` | `/logs` | `?limit&level&code&since` | `{ count, entries: [...] }` — the structured log `taw/core` writes |
 | `POST` | `/framework/sync` | `{ "dry_run": bool }` | the `php bin/taw sync --json` report verbatim |
 | `POST` | `/taw` | `{ "command": string, "args": string[] }` | `{ exit_code, stdout, stderr }` — allow-listed commands only |
@@ -54,6 +54,12 @@ not a `taw/core` dependency — same decoupling rationale as `TawRunner`.
 `sync inspect seo:extract seo:inject icons:sync export:static`. **Not** `fields:set`, **not**
 the raw `wp` passthrough. `/framework/sync` drives the *existing* `bin/taw sync` — it does
 not reinvent the per-site sync logic.
+
+**`proc_open`-disabled hosts** (most managed WordPress hosting — WPMU DEV, WP Engine, Kinsta,
+…): `/framework/sync` and `/taw` return `503 {"error":"exec_unavailable"}` — they shell out
+to `bin/taw` and can't run. `/health` (which reports `"exec_available": false`) and `/logs`
+work everywhere; they never spawn a subprocess. Run framework sync via the theme's own
+`framework-sync.yml` GitHub Action on those hosts.
 
 ## The wire protocol (ADR-0003)
 
