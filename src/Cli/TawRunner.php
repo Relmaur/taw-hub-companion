@@ -15,7 +15,9 @@ if (!defined('ABSPATH')) {
  *
  * Watch-outs carried from taw-hub's Part 6 notes:
  *  - CWD must be the theme root (where `bin/taw` lives).
- *  - The PHP binary is discovered (`PHP_BINARY`), never hard-coded.
+ *  - The PHP binary is resolved to a real CLI interpreter — `PHP_BINARY` is
+ *    `php-fpm` under the SAPI that actually serves the Hub's requests (see
+ *    {@see self::phpBinary()}).
  *  - Some `taw` commands boot WordPress (`inspect`, `fields:*`) → nested
  *    bootstrap. `sync` (the common case) deliberately does not. TODO: route
  *    the WP-booting commands through `WP_CLI::runcommand` when WP-CLI is loaded.
@@ -47,7 +49,7 @@ final class TawRunner
         }
 
         $argv = array_merge(
-            [PHP_BINARY, $binary, $command],
+            [$this->phpBinary(), $binary, $command],
             array_values(array_filter($args, 'is_string')),
         );
 
@@ -68,6 +70,7 @@ final class TawRunner
 
         $stdout   = '';
         $stderr   = '';
+        $exitCode = -1;
         $deadline = microtime(true) + $this->timeoutSeconds;
 
         while (true) {
@@ -76,11 +79,15 @@ final class TawRunner
 
             $status = proc_get_status($process);
             if (!$status['running']) {
+                // The first proc_get_status() after exit carries the real code;
+                // proc_close() would return -1 here (already reaped).
+                $exitCode = $status['exitcode'];
                 break;
             }
             if (microtime(true) > $deadline) {
                 proc_terminate($process, 9);
                 $stderr .= "\n[taw-hub-companion] command timed out after {$this->timeoutSeconds}s";
+                $exitCode = 124;
                 break;
             }
             usleep(50_000);
@@ -90,12 +97,62 @@ final class TawRunner
         $stderr .= stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
+        proc_close($process);
 
         return [
-            'exit_code' => proc_close($process),
+            'exit_code' => $exitCode,
             'stdout'    => $stdout,
             'stderr'    => $stderr,
         ];
+    }
+
+    /**
+     * Resolve a CLI PHP interpreter.
+     *
+     * `PHP_BINARY` is only the CLI binary under the `cli` SAPI (WP-CLI, cron,
+     * our own nested `bin/taw`). Under php-fpm / cgi / apache — i.e. a normal
+     * REST request, which is exactly how the Hub reaches us — `PHP_BINARY`
+     * points at the SAPI binary (`php-fpm`), which prints its own usage and
+     * ignores a script argument. So off the `cli` SAPI, look for a real `php`
+     * next to it (Local ships `sbin/php-fpm` + `bin/php`), then `PHP_BINDIR`,
+     * then `PATH`. A site can force it with the `taw_hub_companion_php_binary`
+     * filter.
+     */
+    private function phpBinary(): string
+    {
+        if (function_exists('apply_filters')) {
+            $override = apply_filters('taw_hub_companion_php_binary', null);
+            if (is_string($override) && $override !== '' && is_executable($override)) {
+                return $override;
+            }
+        }
+
+        if (PHP_SAPI === 'cli' && is_executable(PHP_BINARY)) {
+            return PHP_BINARY;
+        }
+
+        $dir = dirname(PHP_BINARY);
+        $candidates = [
+            $dir . '/php',                // same dir as the SAPI binary
+            dirname($dir) . '/bin/php',   // Local's sbin/php-fpm → bin/php
+            PHP_BINDIR . '/php',
+        ];
+        $path = getenv('PATH');
+        if (is_string($path)) {
+            foreach (explode(PATH_SEPARATOR, $path) as $dir) {
+                if ($dir !== '') {
+                    $candidates[] = rtrim($dir, '/') . '/php';
+                }
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return 'php';
     }
 
     private function themeDir(): string
