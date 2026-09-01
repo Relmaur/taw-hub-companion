@@ -42,6 +42,10 @@ final class TawRunner
             return $this->fail(126, "command not allowed: {$command}");
         }
 
+        if (!self::available()) {
+            return $this->fail(503, 'exec_unavailable: proc_open is disabled on this host');
+        }
+
         $themeDir = $this->themeDir();
         $binary   = $themeDir . '/bin/taw';
         if (!is_file($binary)) {
@@ -59,7 +63,7 @@ final class TawRunner
             2 => ['pipe', 'w'],
         ];
 
-        $process = @proc_open($argv, $descriptors, $pipes, $themeDir);
+        $process = @\proc_open($argv, $descriptors, $pipes, $themeDir);
         if (!is_resource($process)) {
             return $this->fail(1, 'could not start the taw process');
         }
@@ -77,7 +81,7 @@ final class TawRunner
             $stdout .= stream_get_contents($pipes[1]);
             $stderr .= stream_get_contents($pipes[2]);
 
-            $status = proc_get_status($process);
+            $status = \proc_get_status($process);
             if (!$status['running']) {
                 // The first proc_get_status() after exit carries the real code;
                 // proc_close() would return -1 here (already reaped).
@@ -85,7 +89,7 @@ final class TawRunner
                 break;
             }
             if (microtime(true) > $deadline) {
-                proc_terminate($process, 9);
+                \proc_terminate($process, 9);
                 $stderr .= "\n[taw-hub-companion] command timed out after {$this->timeoutSeconds}s";
                 $exitCode = 124;
                 break;
@@ -97,13 +101,38 @@ final class TawRunner
         $stderr .= stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
-        proc_close($process);
+        \proc_close($process);
 
         return [
             'exit_code' => $exitCode,
             'stdout'    => $stdout,
             'stderr'    => $stderr,
         ];
+    }
+
+    /**
+     * Whether `bin/taw` can be run at all on this host.
+     *
+     * Managed WordPress hosts routinely put `proc_open` in `disable_functions`.
+     * PHP 8 then reports it as undefined, so an unqualified call inside this
+     * namespace fatals uncatchably rather than falling back to the (absent)
+     * global. Callers (the REST controllers, `/health`) check this first and
+     * degrade cleanly — `/health` and `/logs` never need a subprocess.
+     */
+    public static function available(): bool
+    {
+        if (!function_exists('proc_open')) {
+            return false;
+        }
+
+        $disabled = ini_get('disable_functions');
+        if (!is_string($disabled) || $disabled === '') {
+            return true;
+        }
+
+        $list = array_map('trim', explode(',', strtolower($disabled)));
+
+        return !in_array('proc_open', $list, true);
     }
 
     /**

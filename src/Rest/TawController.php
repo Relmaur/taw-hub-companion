@@ -28,14 +28,25 @@ final class TawController
      */
     public function handle(\WP_REST_Request $request): \WP_REST_Response
     {
-        $params  = $request->get_json_params() ?: [];
-        $command = is_string($params['command'] ?? null) ? $params['command'] : '';
-        $args    = is_array($params['args'] ?? null)
-            ? array_values(array_filter($params['args'], 'is_string'))
-            : [];
+        if (!TawRunner::available()) {
+            return new \WP_REST_Response([
+                'error'   => 'exec_unavailable',
+                'message' => 'proc_open is disabled on this host — /taw is not available here.',
+            ], 503);
+        }
 
-        $result = $this->runner->run($command, $args);
+        try {
+            $params  = $request->get_json_params() ?: [];
+            $command = is_string($params['command'] ?? null) ? $params['command'] : '';
+            $args    = is_array($params['args'] ?? null)
+                ? array_values(array_filter($params['args'], 'is_string'))
+                : [];
 
-        return new \WP_REST_Response($result, $result['exit_code'] === 0 ? 200 : 422);
+            $result = $this->runner->run($command, $args);
+
+            return new \WP_REST_Response($result, $result['exit_code'] === 0 ? 200 : 422);
+        } catch (\Throwable) {
+            return new \WP_REST_Response(['error' => 'internal_error'], 500);
+        }
     }
 }

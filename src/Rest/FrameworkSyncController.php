@@ -29,21 +29,32 @@ final class FrameworkSyncController
      */
     public function handle(\WP_REST_Request $request): \WP_REST_Response
     {
-        $params = $request->get_json_params() ?: [];
-        $dryRun = (bool) ($params['dry_run'] ?? false);
-
-        $args   = $dryRun ? ['--json'] : ['--apply', '--json'];
-        $result = $this->runner->run('sync', $args);
-
-        $report = json_decode($result['stdout'], true);
-        if (!is_array($report)) {
+        if (!TawRunner::available()) {
             return new \WP_REST_Response([
-                'error'     => 'sync_report_unparseable',
-                'exit_code' => $result['exit_code'],
-                'stderr'    => $result['stderr'],
-            ], 502);
+                'error'   => 'exec_unavailable',
+                'message' => 'proc_open is disabled on this host — /framework/sync is not available here.',
+            ], 503);
         }
 
-        return new \WP_REST_Response($report, $result['exit_code'] === 0 ? 200 : 502);
+        try {
+            $params = $request->get_json_params() ?: [];
+            $dryRun = (bool) ($params['dry_run'] ?? false);
+
+            $args   = $dryRun ? ['--json'] : ['--apply', '--json'];
+            $result = $this->runner->run('sync', $args);
+
+            $report = json_decode($result['stdout'], true);
+            if (!is_array($report)) {
+                return new \WP_REST_Response([
+                    'error'     => 'sync_report_unparseable',
+                    'exit_code' => $result['exit_code'],
+                    'stderr'    => $result['stderr'],
+                ], 502);
+            }
+
+            return new \WP_REST_Response($report, $result['exit_code'] === 0 ? 200 : 502);
+        } catch (\Throwable) {
+            return new \WP_REST_Response(['error' => 'internal_error'], 500);
+        }
     }
 }

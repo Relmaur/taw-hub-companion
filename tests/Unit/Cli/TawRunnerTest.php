@@ -80,6 +80,13 @@ final class TawRunnerTest extends TestCase
         $this->assertSame(127, $result['exit_code']);
     }
 
+    public function test_available_is_true_when_proc_open_is_enabled(): void
+    {
+        // The CI/dev environment has proc_open; the disabled path is exercised
+        // by managed-host deployments (found on WPMU DEV).
+        $this->assertSame(function_exists('proc_open'), TawRunner::available());
+    }
+
     public function test_php_binary_resolves_to_the_cli_interpreter_under_the_cli_sapi(): void
     {
         // PHPUnit runs under the `cli` SAPI, so PHP_BINARY is already correct.

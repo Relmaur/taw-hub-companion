@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TAW\HubCompanion\Telemetry;
 
+use TAW\HubCompanion\Cli\TawRunner;
 use TAW\HubCompanion\Keys\SiteKeypair;
 
 if (!defined('ABSPATH')) {
@@ -18,7 +19,9 @@ if (!defined('ABSPATH')) {
  *
  * `site_public_key` / `site_key_id` are a superset for registration
  * convenience (Part 6: "public key surfaced via /health for Hub registration").
- * COORDINATION (ADR-0005): confirm `HealthSnapshot` tolerates the extra keys.
+ * `exec_available` is false on hosts that disable `proc_open` (most managed
+ * WordPress hosts) — the Hub uses it to skip `/framework/sync` and `/taw` for
+ * that site. COORDINATION (ADR-0005): `HealthSnapshot` ignores unknown keys.
  */
 final class HealthReport
 {
@@ -41,6 +44,7 @@ final class HealthReport
                 : null,
             'site_public_key'   => $this->keypair->publicKeyBase64(),
             'site_key_id'       => $this->keypair->keyId(),
+            'exec_available'    => TawRunner::available(),
         ];
     }
 
