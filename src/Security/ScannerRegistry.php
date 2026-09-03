@@ -31,7 +31,7 @@ final class ScannerRegistry
         $db = WpdbDatabase::fromGlobals();
 
         $scanners = [
-            // A DefenderScanner adapter slots in here first, once built.
+            new DefenderScanner($db),   // fleet standard — checked first
             new WordfenceScanner($db),
         ];
 

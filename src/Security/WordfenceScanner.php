@@ -156,7 +156,7 @@ final class WordfenceScanner implements SecurityScanner
             slug: $this->str($data['slug'] ?? null),
             componentFile: $this->pluginFile($data['pluginFile'] ?? null),
             installedVersion: $this->str($data['Version'] ?? ($data['version'] ?? null)),
-            severity: $cvss !== null ? self::cvssLabel($cvss) : self::wfLabel($row['severity'] ?? null),
+            severity: $cvss !== null ? Severity::fromCvss($cvss) : self::wfLabel($row['severity'] ?? null),
             cvssScore: $cvss,
             cvssVector: $this->str($data['cvssVector'] ?? null),
             kind: $kind,
@@ -226,17 +226,6 @@ final class WordfenceScanner implements SecurityScanner
             50      => 'medium',
             25      => 'low',
             default => 'unknown',
-        };
-    }
-
-    private static function cvssLabel(float $score): string
-    {
-        return match (true) {
-            $score >= 9.0 => 'critical',
-            $score >= 7.0 => 'high',
-            $score >= 4.0 => 'medium',
-            $score > 0.0  => 'low',
-            default       => 'unknown',
         };
     }
 

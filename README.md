@@ -102,11 +102,14 @@ computed — the companion does no vulnerability matching itself. A per-scanner 
 picks the first installed scanner (fleet standard first, fallback after). Read-only,
 DB-read-only, behind the same signature guard.
 
+- **Defender / Defender Pro** (`DefenderScanner`) — reads the `defender_scan` +
+  `defender_scan_item` tables: `vulnerability` items (one companion finding per bug, with
+  CVSS), `plugin_closed` (→ `removed`), `plugin_outdated` (→ `abandoned`). `last_scan_at`
+  from the latest `finish`/`idle` scan's `date_end`. Verified against Defender 6.2.4. Checked
+  first — it's the fleet standard.
 - **Wordfence** (`WordfenceScanner`) — reads the `wfIssues` table: `wfPluginVulnerable`,
   `wfPluginAbandoned`, `wfPluginRemoved`, and core/plugin/theme update rows that carry a
   `vulnerable` flag. Verified against Wordfence 8.2.x.
-- **Defender Pro** — adapter pending (needs a real Pro install to read); slots in ahead of
-  Wordfence in `ScannerRegistry::default()`.
 
 Envelope: `scanner` is `null` when no supported scanner is installed, or
 `{ name, version, last_scan_at }` — `last_scan_at: null` meaning installed but never scanned.
