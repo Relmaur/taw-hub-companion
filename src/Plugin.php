@@ -23,6 +23,7 @@ use TAW\HubCompanion\Security\ScannerRegistry;
 use TAW\HubCompanion\Telemetry\ChecksumReport;
 use TAW\HubCompanion\Telemetry\HealthReport;
 use TAW\HubCompanion\Telemetry\InventoryReport;
+use TAW\HubCompanion\Update\Updater;
 use TAW\HubCompanion\Wire\KeyRing;
 use TAW\HubCompanion\Wire\ResponseSigner;
 use TAW\HubCompanion\Wire\ReplayStore;
@@ -85,6 +86,14 @@ final class Plugin
 
         $signing = new ResponseSigning($config, new ResponseSigner($keypair));
         add_filter('rest_post_dispatch', [$signing, 'filter'], 10, 3);
+
+        if (defined('TAW_HUB_COMPANION_FILE') && defined('TAW_HUB_COMPANION_VERSION')) {
+            (new Updater(
+                (string) constant('TAW_HUB_COMPANION_FILE'),
+                (string) constant('TAW_HUB_COMPANION_VERSION'),
+                $config->autoUpdateEnabled(),
+            ))->register();
+        }
     }
 
     public static function renderAdminNotices(): void

@@ -1,0 +1,54 @@
+name: Release
+
+# Tag a version (`git tag v0.2.0 && git push origin v0.2.0`) and this builds
+# the plugin zip and publishes it as a GitHub Release asset. Every fleet site
+# running >= 0.2.0 then sees it through src/Update/Updater.php — as an "Update
+# available" row, and (unless TAW_HUB_COMPANION_AUTO_UPDATE is false) via
+# WordPress's background auto-update cron.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches the plugin header version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          HEADER="$(grep -m1 -oE 'Version:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+' taw-hub-companion.php | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+          CONST="$(grep -m1 -oE "TAW_HUB_COMPANION_VERSION', '[0-9]+\.[0-9]+\.[0-9]+" taw-hub-companion.php | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+          echo "tag=$TAG header=$HEADER const=$CONST"
+          test "$TAG" = "$HEADER" || { echo "::error::tag ($TAG) != plugin header Version ($HEADER)"; exit 1; }
+          test "$TAG" = "$CONST"  || { echo "::error::tag ($TAG) != TAW_HUB_COMPANION_VERSION ($CONST)"; exit 1; }
+
+      - name: Build plugin zip
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          # --prefix gives the zip a `taw-hub-companion/` top-level dir so
+          # WordPress upgrades the existing plugin folder in place.
+          # export-ignore entries in .gitattributes strip the dev files.
+          git archive --format=zip --prefix=taw-hub-companion/ \
+            -o "taw-hub-companion-${VERSION}.zip" "${GITHUB_REF_NAME}"
+          echo "--- zip contents ---"
+          unzip -l "taw-hub-companion-${VERSION}.zip"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release create "${GITHUB_REF_NAME}" \
+            "taw-hub-companion-${VERSION}.zip" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes

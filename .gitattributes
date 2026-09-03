@@ -1,0 +1,13 @@
+# Files stripped from the `git archive` build the release workflow ships as
+# the plugin zip (see .github/workflows/release.yml). Keep this in sync with
+# what a site actually needs at runtime: taw-hub-companion.php, uninstall.php,
+# src/, README.md, composer.json. No vendor/ — the plugin has an SPL autoload
+# fallback in taw-hub-companion.php.
+/.github            export-ignore
+/tests              export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/phpstan.neon       export-ignore
+/phpunit.xml        export-ignore
+/composer.lock      export-ignore
+/.phpunit.result.cache export-ignore

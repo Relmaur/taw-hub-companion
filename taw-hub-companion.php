@@ -3,12 +3,13 @@
 /**
  * Plugin Name:       TAW Hub Companion
  * Description:        Signed wp-json/taw-hub/v1 receiver for the TAW Hub control hub. No passwords — every request is verified against the Hub's Ed25519 key per taw-hub ADR-0003.
- * Version:           0.1.7
+ * Version:           0.2.0
  * Requires at least: 6.4
  * Requires PHP:      8.2
  * Author:            Marco Del Riego
  * License:           GPL-2.0-or-later
  * Text Domain:       taw-hub-companion
+ * Update URI:        https://github.com/Relmaur/taw-hub-companion
  *
  * Configuration is read from wp-config.php constants only (never the options
  * table), matching the taw/core `Cors.php` precedent:
@@ -18,9 +19,15 @@
  *   define('TAW_HUB_HMAC_SECRET','…');                                         // optional — the HMAC (n8n) channel
  *   define('TAW_HUB_ALLOWED_IPS','203.0.113.4, 203.0.113.5');                  // optional — IP allow-list
  *   define('TAW_HUB_SITE_KEY_ID','site-abc123');                               // optional — override the site's own key id
+ *   define('TAW_HUB_COMPANION_AUTO_UPDATE', false);                            // optional — hold this site back from background auto-updates
  *
  * With no TAW_HUB_PUBLIC_KEY the plugin is inert: routes return 501 and an
  * admin notice explains what to define.
+ *
+ * The plugin self-updates from its GitHub releases (Relmaur/taw-hub-companion):
+ * every site shows the standard "Update available" row, and unless
+ * TAW_HUB_COMPANION_AUTO_UPDATE is false it also applies releases through
+ * WordPress's background auto-update cron. See src/Update/Updater.php.
  */
 
 declare(strict_types=1);
@@ -43,7 +50,7 @@ if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     });
 }
 
-define('TAW_HUB_COMPANION_VERSION', '0.1.7');
+define('TAW_HUB_COMPANION_VERSION', '0.2.0');
 define('TAW_HUB_COMPANION_FILE', __FILE__);
 
 register_activation_hook(__FILE__, [\TAW\HubCompanion\Plugin::class, 'activate']);

@@ -60,6 +60,19 @@ final class Config
     }
 
     /**
+     * Whether the plugin opts itself into WordPress's background auto-update
+     * cron (via {@see \TAW\HubCompanion\Update\Updater}). On by default —
+     * define `TAW_HUB_COMPANION_AUTO_UPDATE` as `false` in `wp-config.php` to
+     * hold a site back to manual "Update available" / Hub-driven updates.
+     */
+    public function autoUpdateEnabled(): bool
+    {
+        $value = self::constant('TAW_HUB_COMPANION_AUTO_UPDATE');
+
+        return !($value === false || $value === 0 || $value === '0' || $value === 'false');
+    }
+
+    /**
      * @return list<string> IP allow-list; empty → allow all source IPs.
      */
     public function allowedIps(): array

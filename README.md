@@ -23,15 +23,37 @@ wire protocol. Plugin architecture:
    // define('TAW_HUB_HMAC_SECRET', '…');       // optional — the HMAC (n8n) channel
    // define('TAW_HUB_ALLOWED_IPS', '203.0.113.4, 203.0.113.5');  // optional — source-IP allow-list
    // define('TAW_HUB_SITE_KEY_ID', 'site-abc123');               // optional — override the site's own key id
+   // define('TAW_HUB_COMPANION_AUTO_UPDATE', false);             // optional — hold this site back from background auto-updates
    ```
 
 3. Activate. The plugin generates this site's own Ed25519 keypair.
-4. Register the site with the Hub: `GET /wp-json/taw-hub/v1/health` returns
-   `site_public_key` + `site_key_id` (also shown in an admin notice). Give those to the
+4. Register the site with the Hub — on a TAW site, `php bin/taw hub:enroll` (taw/core ≥
+   v1.23.0) does it in one command. Otherwise `GET /wp-json/taw-hub/v1/health` returns
+   `site_public_key` + `site_key_id` (also shown in an admin notice); give those to the
    Hub operator (`RegisterSite`).
 
 Without `TAW_HUB_PUBLIC_KEY` the plugin is **inert** — every route returns `501` and an
 admin notice explains what to define.
+
+## Updating
+
+The plugin self-updates from its **GitHub releases** (`Relmaur/taw-hub-companion`) — no SSH,
+no per-site zip upload. From `0.2.0` on (`src/Update/Updater.php`):
+
+- Every site shows the standard **"Update available"** row in *Plugins*, and
+  `wp plugin update taw-hub-companion` works.
+- Unless `TAW_HUB_COMPANION_AUTO_UPDATE` is `false` in `wp-config.php`, the plugin also opts
+  itself into WordPress's **background auto-update cron** — a tagged release rolls out
+  fleet-wide within a cron cycle (~12 h) with no operator action.
+
+Cutting a release: bump `Version:` in `taw-hub-companion.php` **and**
+`TAW_HUB_COMPANION_VERSION`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`. The
+`release.yml` workflow builds the plugin zip (`git archive`, dev files stripped via
+`.gitattributes`, no `vendor/`) and publishes it as the release asset the updater points at.
+The tag must match both version strings or the workflow fails.
+
+A site still on a pre-`0.2.0` build has no updater — bring it to `0.2.0` once by hand (upload
+the release zip, or `git pull` a checkout), and it self-maintains after that.
 
 ## Routes (`taw-hub/v1`)
 

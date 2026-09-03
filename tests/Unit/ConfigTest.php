@@ -25,4 +25,10 @@ final class ConfigTest extends TestCase
         $this->assertSame('wp-json', $c->restPrefix());
         $this->assertSame([], $c->allowedIps());
     }
+
+    public function test_auto_update_is_on_unless_the_constant_says_otherwise(): void
+    {
+        // TAW_HUB_COMPANION_AUTO_UPDATE is not defined in the test process.
+        $this->assertTrue((new Config())->autoUpdateEnabled());
+    }
 }
