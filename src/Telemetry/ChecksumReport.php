@@ -28,10 +28,20 @@ if (!defined('ABSPATH')) {
  *   - detail (`slug` given): adds the full `files` map for the matched
  *     component(s).
  *
- * Only executable / script file types are hashed (`.php`, `.js`, …, plus
- * extension-less files); images, fonts, CSS, language files and the
- * `node_modules` / `.git` trees are skipped. A component over {@see MAX_FILES}
- * hashed files is reported `truncated`.
+ * Only executable / script file types are hashed (see {@see HASH_EXTENSIONS},
+ * plus extension-less files); images, fonts, CSS, language files and the
+ * `node_modules` / `.git` / `.svn` / `.hg` trees are skipped, symlinks are not
+ * followed, and files over {@see MAX_FILE_BYTES} are skipped. A component past
+ * {@see MAX_FILES} hashed files is reported `truncated`.
+ *
+ * `tree_hash` canonical form — must be byte-identical to what the Hub
+ * recomputes from a wordpress.org release zip (applying the same filters):
+ * take `relpath => lowercase-hex-sha256(file)` for every hashed file, sort by
+ * the raw byte order of `relpath` (forward slashes), join as
+ * `"<relpath>:<filehash>\n"` (trailing newline on every entry), sha256 the
+ * result. **`tree_hash` is authoritative only when `truncated` is false** —
+ * a truncated set depends on filesystem traversal order, so the Hub must fall
+ * back to a per-file `files`-map comparison there.
  */
 final class ChecksumReport
 {
@@ -206,11 +216,16 @@ final class ChecksumReport
             $missing = true;
         }
 
-        ksort($files);
+        // Canonical form (must be byte-identical to what the Hub recomputes
+        // from a wordpress.org release zip): keys sorted by raw byte order,
+        // each entry `"<relpath>:<lowercase-hex-sha256>\n"`, concatenated
+        // (trailing newline on every line, including the last), then sha256.
+        // `hash()` / `hash_file()` already return lowercase hex.
+        ksort($files, SORT_STRING);
 
-        $lines = [];
+        $canonical = '';
         foreach ($files as $relPath => $hash) {
-            $lines[] = $relPath . ':' . $hash;
+            $canonical .= $relPath . ':' . $hash . "\n";
         }
 
         $component = [
@@ -221,7 +236,7 @@ final class ChecksumReport
             'file_count' => count($files),
             'truncated'  => $truncated,
             'missing'    => $missing,
-            'tree_hash'  => hash('sha256', implode("\n", $lines)),
+            'tree_hash'  => hash('sha256', $canonical),
         ];
 
         if ($detail) {

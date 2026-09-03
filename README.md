@@ -84,10 +84,17 @@ only produces the manifest; all comparison is the Hub's. Two modes:
   matched component(s). `?type=plugin|mu_plugin|theme` narrows the set.
 
 Only executable / script types are hashed (`.php`, `.js`, `.sh`, … and extension-less
-files); images, fonts, CSS and language files, and the `node_modules` / `.git` trees, are
-skipped. Symlinks are not followed. A component past ~6000 hashed files is reported
-`truncated: true`; a plugin whose directory is gone is `missing: true`. Reads the
-filesystem; never spawns a subprocess.
+files); images, fonts, CSS and language files, and the `node_modules` / `.git` / `.svn` /
+`.hg` trees, are skipped. Symlinks are not followed; files over 3 MB are skipped. A
+component past ~6000 hashed files is reported `truncated: true`; a plugin whose directory is
+gone is `missing: true`. Reads the filesystem; never spawns a subprocess.
+
+`tree_hash` canonical form (byte-identical to what the Hub recomputes from a wordpress.org
+release zip under the same filters): `relpath → lowercase-hex sha256(file)` for every hashed
+file, sorted by the raw byte order of `relpath`, joined as `"<relpath>:<filehash>\n"`
+(trailing newline on every entry), then sha256. **Authoritative only when `truncated` is
+false** — a truncated set is traversal-order-dependent, so the Hub falls back to a per-file
+`files`-map diff there.
 
 `/vulnerabilities` reports the security findings the site's **own scanner** has already
 computed — the companion does no vulnerability matching itself. A per-scanner read adapter

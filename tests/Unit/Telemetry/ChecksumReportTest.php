@@ -78,6 +78,21 @@ final class ChecksumReportTest extends TestCase
         $this->assertSame(hash('sha256', "<?php // main\n"), $files['acme.php']);
     }
 
+    public function test_tree_hash_uses_the_documented_canonical_format(): void
+    {
+        // out-of-order on disk; canonical form sorts by raw byte order
+        $this->plugin('acme', ['b.php' => 'B', 'a.php' => 'A', 'z/nested.php' => 'Z']);
+
+        $canonical =
+            'a.php:' . hash('sha256', 'A') . "\n"
+            . 'b.php:' . hash('sha256', 'B') . "\n"
+            . 'z/nested.php:' . hash('sha256', 'Z') . "\n";
+
+        $treeHash = (new ChecksumReport())->collect()['components'][0]['tree_hash'];
+
+        $this->assertSame(hash('sha256', $canonical), $treeHash);
+    }
+
     public function test_tree_hash_is_stable_across_runs_and_moves_when_a_file_changes(): void
     {
         $this->plugin('acme', ['acme.php' => "<?php // v1\n"]);
