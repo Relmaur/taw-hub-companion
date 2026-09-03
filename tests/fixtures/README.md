@@ -12,3 +12,13 @@ direction.
 
 **Re-copy this file** whenever the Hub regenerates it (which only happens on a
 `TAW-HUB-v1` → `v2` canonical change, gated by a new ADR).
+
+---
+
+`inventory-snapshot.schema.json` is copied verbatim from `Relmaur/taw-hub`
+(`docs/reference/inventory-snapshot.schema.json`) — the contract for the `GET /inventory`
+response (taw-hub ADR-0013). `tests/Unit/Telemetry/InventorySchemaTest.php` validates
+`InventoryReport::collect()` against it, and round-trips the schema's own `examples[0]`.
+
+**Re-copy this file** whenever the Hub changes the schema. A change the companion must react
+to bumps `InventoryReport::SCHEMA_VERSION`.

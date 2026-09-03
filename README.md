@@ -38,10 +38,37 @@ admin notice explains what to define.
 | Method | Route | Body / query | Returns |
 |---|---|---|---|
 | `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id, exec_available }` |
+| `GET` | `/inventory` | — | `{ schema_version, generated_at, wp_version, wp_locale, wp_multisite, php_version, plugins:[…], mu_plugins:[…], dropins:[…], themes:[…] }` — a security-focused SBOM |
 | `GET` | `/logs` | `?limit&level&code&since` | `{ count, entries: [...] }` — the structured log `taw/core` writes |
 | `POST` | `/framework/sync` | `{ "dry_run": bool }` | the `php bin/taw sync --json` report verbatim |
 | `POST` | `/taw` | `{ "command": string, "args": string[] }` | `{ exit_code, stdout, stderr }` — allow-listed commands only |
 | `POST` | `/keys/rotate` | — | `{ "public_key": "<base64>" }` — new keypair, same key id |
+
+`/inventory` is a read-only, subprocess-free software bill of materials — every plugin,
+must-use plugin, drop-in and theme with the metadata the Hub needs to correlate the fleet
+against vulnerability feeds (WPScan / Patchstack), spot abandoned components and flag pending
+updates. Schema coordinated with the Hub's `SiteFleet\Data\InventorySnapshot` (taw-hub
+ADR-0013); `schema_version` (currently `1`) lets the Hub branch on companion evolution.
+
+Per-plugin fields: `slug` (folder-derived — unreliable for non-.org plugins), `file` (WP's
+canonical key, the Hub's dedup key), `name`, `version`, `active`, `network_active`,
+`auto_update`, `author`, `plugin_uri`, `update_uri` (raw header), `requires_wp`,
+`requires_php`, `tested_up_to` (parsed from `readme.txt`), `update_version` (pending version
+or `null`), `update_source` (`wordpress_org` \| `external` \| `disabled` \| `unknown` — i.e.
+*who, if anyone, is watching this plugin for updates*; `unknown` is the abandoned-plugin
+smoking gun) and `main_file_mtime` (ISO-8601; *not* an install date — redeploys and
+migrations reset it, so the Hub should drive "age" off its own first-seen timestamp).
+
+Themes carry the same signals where they apply: `slug`, `name`, `version`, `active`,
+`parent_active`, `template`, `author`, `requires_wp`, `requires_php`, `auto_update`,
+`update_version`, `update_source`. `mu_plugins` carry `file`, `name`, `version`, `author`,
+`main_file_mtime`. `dropins` is the bare list of present drop-in filenames
+(`object-cache.php`, `db.php`, `sunrise.php`, …) — an unexpected drop-in is a classic
+persistence trick.
+
+Works on every host; like `/health` and `/logs` it never spawns a subprocess. The Hub's
+snapshot type ignores unknown keys (the ADR-0005 `HealthSnapshot` precedent), so fields can
+be added without a lock-step Hub release.
 
 `/logs` serves the JSON-Lines file `taw/core`'s `TAW\Core\Log\Logger` writes to
 `wp-content/taw-logs/` — read-only, so the Hub can report on a site without SSH. `limit`

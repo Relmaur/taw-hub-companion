@@ -1,0 +1,138 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/Relmaur/taw-hub/docs/reference/inventory-snapshot.schema.json",
+    "title": "TAW companion /inventory response",
+    "description": "Canonical wire shape of GET /wp-json/taw-hub/v1/inventory (taw-hub-companion). The contract between the companion and App\\Domains\\SiteFleet\\Data\\InventorySnapshot (ADR-0013). The companion mirrors this file into its own tests/fixtures/ and asserts its output validates; the Hub parses tolerantly (unknown keys ignored, every string field nullable, the four collections default to []). additionalProperties is true everywhere so the schema can grow additively without a coordinated release — bump `schema_version` when a consumer must branch on the change.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "schema_version", "generated_at", "wp_version", "wp_locale",
+        "wp_multisite", "php_version", "plugins", "mu_plugins", "dropins", "themes"
+    ],
+    "properties": {
+        "schema_version": { "type": "integer", "minimum": 1, "description": "InventoryReport::SCHEMA_VERSION on the companion. Currently 1." },
+        "generated_at": { "type": ["string", "null"], "format": "date-time", "description": "Site-side SBOM build time, ISO-8601. The site's own clock — the Hub stamps its own fetched_at on receipt and reasons about that." },
+        "wp_version": { "type": ["string", "null"] },
+        "wp_locale": { "type": ["string", "null"] },
+        "wp_multisite": { "type": "boolean" },
+        "php_version": { "type": ["string", "null"] },
+        "plugins": { "type": "array", "items": { "$ref": "#/$defs/plugin" } },
+        "mu_plugins": { "type": "array", "items": { "$ref": "#/$defs/muPlugin" } },
+        "dropins": { "type": "array", "items": { "type": "string" }, "description": "Bare filenames of present drop-ins, e.g. object-cache.php, advanced-cache.php." },
+        "themes": { "type": "array", "items": { "$ref": "#/$defs/theme" } }
+    },
+    "$defs": {
+        "updateSource": {
+            "type": "string",
+            "enum": ["wordpress_org", "external", "disabled", "unknown"],
+            "description": "Who, if anyone, is watching the component for updates. wordpress_org: in the update_{plugins,themes} transient's response OR no_update bucket. external: non-empty `Update URI` header. disabled: `Update URI` is literally false/x. unknown: nothing watching it — abandoned-component candidate."
+        },
+        "plugin": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+                "slug", "file", "name", "version", "active", "network_active",
+                "auto_update", "author", "plugin_uri", "update_uri", "requires_wp",
+                "requires_php", "tested_up_to", "update_version", "update_source",
+                "main_file_mtime"
+            ],
+            "properties": {
+                "slug": { "type": ["string", "null"], "description": "Folder-derived; unreliable for non-.org plugins. Advisory feeds key on this." },
+                "file": { "type": "string", "description": "WP canonical key (folder/entry.php). The Hub's dedup key." },
+                "name": { "type": ["string", "null"] },
+                "version": { "type": ["string", "null"] },
+                "active": { "type": "boolean" },
+                "network_active": { "type": "boolean" },
+                "auto_update": { "type": "boolean" },
+                "author": { "type": ["string", "null"], "description": "Tags stripped." },
+                "plugin_uri": { "type": ["string", "null"] },
+                "update_uri": { "type": ["string", "null"], "description": "Raw `Update URI` header verbatim." },
+                "requires_wp": { "type": ["string", "null"] },
+                "requires_php": { "type": ["string", "null"] },
+                "tested_up_to": { "type": ["string", "null"], "description": "Parsed from readme.txt; null for single-file/private plugins." },
+                "update_version": { "type": ["string", "null"], "description": "Pending version string, or null." },
+                "update_source": { "$ref": "#/$defs/updateSource" },
+                "main_file_mtime": { "type": ["string", "null"], "format": "date-time", "description": "Main-file mtime, ISO-8601, or null. NOT an install date — the Hub drives 'age' off its own first-seen timestamp; this is a weak secondary signal only." }
+            }
+        },
+        "muPlugin": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["file", "name", "version", "author", "main_file_mtime"],
+            "properties": {
+                "file": { "type": "string" },
+                "name": { "type": ["string", "null"] },
+                "version": { "type": ["string", "null"] },
+                "author": { "type": ["string", "null"] },
+                "main_file_mtime": { "type": ["string", "null"], "format": "date-time" }
+            }
+        },
+        "theme": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+                "slug", "name", "version", "active", "parent_active", "template",
+                "author", "requires_wp", "requires_php", "auto_update",
+                "update_version", "update_source"
+            ],
+            "properties": {
+                "slug": { "type": "string" },
+                "name": { "type": ["string", "null"] },
+                "version": { "type": ["string", "null"] },
+                "active": { "type": "boolean" },
+                "parent_active": { "type": "boolean", "description": "True when this theme is the template (parent) of the active child theme." },
+                "template": { "type": ["string", "null"], "description": "Parent theme slug for a child theme; null otherwise." },
+                "author": { "type": ["string", "null"] },
+                "requires_wp": { "type": ["string", "null"] },
+                "requires_php": { "type": ["string", "null"] },
+                "auto_update": { "type": "boolean" },
+                "update_version": { "type": ["string", "null"] },
+                "update_source": { "$ref": "#/$defs/updateSource", "description": "Themes carry no `Update URI`, so only wordpress_org | unknown occur in practice." }
+            }
+        }
+    },
+    "examples": [
+        {
+            "schema_version": 1,
+            "generated_at": "2026-09-02T18:40:11+00:00",
+            "wp_version": "6.6.1",
+            "wp_locale": "en_US",
+            "wp_multisite": false,
+            "php_version": "8.2.20",
+            "plugins": [
+                {
+                    "slug": "akismet", "file": "akismet/akismet.php", "name": "Akismet Anti-spam",
+                    "version": "5.3", "active": true, "network_active": false, "auto_update": false,
+                    "author": "Automattic", "plugin_uri": "https://akismet.com/", "update_uri": null,
+                    "requires_wp": "5.8", "requires_php": "5.6.20", "tested_up_to": "6.5",
+                    "update_version": "5.3.1", "update_source": "wordpress_org",
+                    "main_file_mtime": "2026-01-15T09:12:44+00:00"
+                },
+                {
+                    "slug": "legacy-gallery", "file": "legacy-gallery/legacy-gallery.php", "name": "Legacy Gallery",
+                    "version": "1.4.0", "active": true, "network_active": false, "auto_update": false,
+                    "author": "Unknown", "plugin_uri": null, "update_uri": null,
+                    "requires_wp": null, "requires_php": null, "tested_up_to": "5.4",
+                    "update_version": null, "update_source": "unknown",
+                    "main_file_mtime": "2019-03-02T00:00:00+00:00"
+                }
+            ],
+            "mu_plugins": [
+                { "file": "taw-mu-loader.php", "name": "TAW MU Loader", "version": "1.0.0", "author": "TAW", "main_file_mtime": "2026-02-01T12:00:00+00:00" }
+            ],
+            "dropins": ["object-cache.php", "advanced-cache.php"],
+            "themes": [
+                {
+                    "slug": "taw", "name": "TAW", "version": "1.22.0", "active": false, "parent_active": true,
+                    "template": null, "author": "TAW", "requires_wp": null, "requires_php": "8.2",
+                    "auto_update": false, "update_version": "1.23.0", "update_source": "wordpress_org"
+                },
+                {
+                    "slug": "taw-child", "name": "TAW Child", "version": "1.0.0", "active": true, "parent_active": false,
+                    "template": "taw", "author": "TAW", "requires_wp": null, "requires_php": null,
+                    "auto_update": false, "update_version": null, "update_source": "unknown"
+                }
+            ]
+        }
+    ]
+}

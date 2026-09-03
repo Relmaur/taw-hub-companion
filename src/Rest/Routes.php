@@ -16,6 +16,7 @@ if (!defined('ABSPATH')) {
  * {@see SignatureGuard} as its `permission_callback`.
  *
  *   GET  /health
+ *   GET  /inventory
  *   GET  /logs             ?limit&level&code&since
  *   POST /framework/sync   {"dry_run": bool}
  *   POST /taw              {"command": string, "args": string[]}
@@ -26,6 +27,7 @@ final class Routes
     public function __construct(
         private SignatureGuard $guard,
         private HealthController $health,
+        private InventoryController $inventory,
         private LogsController $logs,
         private FrameworkSyncController $frameworkSync,
         private TawController $taw,
@@ -41,6 +43,12 @@ final class Routes
         register_rest_route($ns, '/health', [
             'methods'             => 'GET',
             'callback'            => [$this->health, 'handle'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/inventory', [
+            'methods'             => 'GET',
+            'callback'            => [$this->inventory, 'handle'],
             'permission_callback' => $guard,
         ]);
 
