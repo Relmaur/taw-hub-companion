@@ -17,6 +17,8 @@ if (!defined('ABSPATH')) {
  *
  *   GET  /health
  *   GET  /inventory
+ *   GET  /inventory/checksums   ?slug&type
+ *   GET  /vulnerabilities
  *   GET  /logs             ?limit&level&code&since
  *   POST /framework/sync   {"dry_run": bool}
  *   POST /taw              {"command": string, "args": string[]}
@@ -28,6 +30,8 @@ final class Routes
         private SignatureGuard $guard,
         private HealthController $health,
         private InventoryController $inventory,
+        private ChecksumsController $checksums,
+        private VulnerabilitiesController $vulnerabilities,
         private LogsController $logs,
         private FrameworkSyncController $frameworkSync,
         private TawController $taw,
@@ -49,6 +53,18 @@ final class Routes
         register_rest_route($ns, '/inventory', [
             'methods'             => 'GET',
             'callback'            => [$this->inventory, 'handle'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/inventory/checksums', [
+            'methods'             => 'GET',
+            'callback'            => [$this->checksums, 'handle'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/vulnerabilities', [
+            'methods'             => 'GET',
+            'callback'            => [$this->vulnerabilities, 'handle'],
             'permission_callback' => $guard,
         ]);
 

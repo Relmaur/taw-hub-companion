@@ -39,6 +39,8 @@ admin notice explains what to define.
 |---|---|---|---|
 | `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id, exec_available }` |
 | `GET` | `/inventory` | — | `{ schema_version, generated_at, wp_version, wp_locale, wp_multisite, php_version, plugins:[…], mu_plugins:[…], dropins:[…], themes:[…] }` — a security-focused SBOM |
+| `GET` | `/inventory/checksums` | `?slug&type` | `{ schema_version, generated_at, mode, components:[…] }` — per-component SHA-256 file manifest |
+| `GET` | `/vulnerabilities` | — | `{ scanner, count, findings:[…] }` — the site scanner's findings, normalized |
 | `GET` | `/logs` | `?limit&level&code&since` | `{ count, entries: [...] }` — the structured log `taw/core` writes |
 | `POST` | `/framework/sync` | `{ "dry_run": bool }` | the `php bin/taw sync --json` report verbatim |
 | `POST` | `/taw` | `{ "command": string, "args": string[] }` | `{ exit_code, stdout, stderr }` — allow-listed commands only |
@@ -69,6 +71,43 @@ persistence trick.
 Works on every host; like `/health` and `/logs` it never spawns a subprocess. The Hub's
 snapshot type ignores unknown keys (the ADR-0005 `HealthSnapshot` precedent), so fields can
 be added without a lock-step Hub release.
+
+`/inventory/checksums` is a per-component SHA-256 **file manifest** — ground truth for the
+Hub to (a) detect file-integrity drift (a webshell dropped into a plugin folder), (b) diff
+one version of a component against the next on update (the "quiet backdoor on update"
+signal), and (c) dedupe fleet-wide analysis by `(slug, version, tree_hash)`. The companion
+only produces the manifest; all comparison is the Hub's. Two modes:
+
+- **summary** (no `slug`) — `tree_hash` + `file_count` per active component; no `files` map.
+  A cheap fleet-wide "did anything change" poll.
+- **detail** (`?slug=<slug>`) — adds the full `files` map (`relpath` → `sha256`) for the
+  matched component(s). `?type=plugin|mu_plugin|theme` narrows the set.
+
+Only executable / script types are hashed (`.php`, `.js`, `.sh`, … and extension-less
+files); images, fonts, CSS and language files, and the `node_modules` / `.git` trees, are
+skipped. Symlinks are not followed. A component past ~6000 hashed files is reported
+`truncated: true`; a plugin whose directory is gone is `missing: true`. Reads the
+filesystem; never spawns a subprocess.
+
+`/vulnerabilities` reports the security findings the site's **own scanner** has already
+computed — the companion does no vulnerability matching itself. A per-scanner read adapter
+(`src/Security/`) reads the scanner's stored results and normalizes them; `ScannerRegistry`
+picks the first installed scanner (fleet standard first, fallback after). Read-only,
+DB-read-only, behind the same signature guard.
+
+- **Wordfence** (`WordfenceScanner`) — reads the `wfIssues` table: `wfPluginVulnerable`,
+  `wfPluginAbandoned`, `wfPluginRemoved`, and core/plugin/theme update rows that carry a
+  `vulnerable` flag. Verified against Wordfence 8.2.x.
+- **Defender Pro** — adapter pending (needs a real Pro install to read); slots in ahead of
+  Wordfence in `ScannerRegistry::default()`.
+
+Envelope: `scanner` is `null` when no supported scanner is installed, or
+`{ name, version, last_scan_at }` — `last_scan_at: null` meaning installed but never scanned.
+Each finding: `scanner`, `component_type` (`plugin|theme|core|unknown`), `slug`,
+`component_file`, `installed_version`, `severity` (`critical|high|medium|low|unknown`),
+`cvss_score`, `cvss_vector`, `kind` (`vulnerability|abandoned|removed|outdated`), `title`,
+`link`, `detected_at`, `scanner_ref`. Filter `taw_hub_companion_security_scanners` to add or
+reorder adapters.
 
 `/logs` serves the JSON-Lines file `taw/core`'s `TAW\Core\Log\Logger` writes to
 `wp-content/taw-logs/` — read-only, so the Hub can report on a site without SSH. `limit`

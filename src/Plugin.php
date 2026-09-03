@@ -9,6 +9,7 @@ use TAW\HubCompanion\Cli\TawRunner;
 use TAW\HubCompanion\Http\ResponseSigning;
 use TAW\HubCompanion\Http\SignatureGuard;
 use TAW\HubCompanion\Keys\SiteKeypair;
+use TAW\HubCompanion\Rest\ChecksumsController;
 use TAW\HubCompanion\Rest\FrameworkSyncController;
 use TAW\HubCompanion\Logs\LogReader;
 use TAW\HubCompanion\Rest\HealthController;
@@ -17,6 +18,9 @@ use TAW\HubCompanion\Rest\KeysController;
 use TAW\HubCompanion\Rest\LogsController;
 use TAW\HubCompanion\Rest\Routes;
 use TAW\HubCompanion\Rest\TawController;
+use TAW\HubCompanion\Rest\VulnerabilitiesController;
+use TAW\HubCompanion\Security\ScannerRegistry;
+use TAW\HubCompanion\Telemetry\ChecksumReport;
 use TAW\HubCompanion\Telemetry\HealthReport;
 use TAW\HubCompanion\Telemetry\InventoryReport;
 use TAW\HubCompanion\Wire\KeyRing;
@@ -70,6 +74,8 @@ final class Plugin
             $guard,
             new HealthController(new HealthReport($keypair)),
             new InventoryController(new InventoryReport()),
+            new ChecksumsController(new ChecksumReport()),
+            new VulnerabilitiesController(ScannerRegistry::default()),
             new LogsController(LogReader::default()),
             new FrameworkSyncController($runner),
             new TawController($runner),
