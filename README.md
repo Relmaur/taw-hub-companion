@@ -93,6 +93,7 @@ the release zip, or `git pull` a checkout), and it self-maintains after that.
 | `GET` | `/inventory/checksums` | `?slug&type` | `{ schema_version, generated_at, mode, components:[…] }` — per-component SHA-256 file manifest |
 | `GET` | `/vulnerabilities` | — | `{ scanner, count, findings:[…] }` — the site scanner's findings, normalized |
 | `GET` | `/logs` | `?limit&level&code&since` | `{ count, entries: [...] }` — the structured log `taw/core` writes |
+| `GET` | `/content` | `?types` | taw/core's Content Interchange snapshot of the published content (no drafts, users, comments or settings), for `taw-fleet pull`; 501 without taw/core (0.4.0+) |
 | `POST` | `/framework/sync` | `{ "dry_run": bool }` | the `php bin/taw sync --json` report verbatim |
 | `POST` | `/taw` | `{ "command": string, "args": string[] }` | `{ exit_code, stdout, stderr }` — allow-listed commands only |
 | `POST` | `/keys/rotate` | — | `{ "public_key": "<base64>" }` — new keypair, same key id |
