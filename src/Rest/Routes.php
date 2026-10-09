@@ -20,6 +20,7 @@ if (!defined('ABSPATH')) {
  *   GET  /inventory/checksums   ?slug&type
  *   GET  /vulnerabilities
  *   GET  /logs             ?limit&level&code&since
+ *   GET  /content          ?types
  *   POST /framework/sync   {"dry_run": bool}
  *   POST /taw              {"command": string, "args": string[]}
  *   POST /keys/rotate
@@ -33,6 +34,7 @@ final class Routes
         private ChecksumsController $checksums,
         private VulnerabilitiesController $vulnerabilities,
         private LogsController $logs,
+        private ContentController $content,
         private FrameworkSyncController $frameworkSync,
         private TawController $taw,
         private KeysController $keys,
@@ -71,6 +73,12 @@ final class Routes
         register_rest_route($ns, '/logs', [
             'methods'             => 'GET',
             'callback'            => [$this->logs, 'handle'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/content', [
+            'methods'             => 'GET',
+            'callback'            => [$this->content, 'handle'],
             'permission_callback' => $guard,
         ]);
 
