@@ -74,6 +74,28 @@
             "expect": "valid"
         },
         {
+            "name": "get_inventory_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "GET",
+            "path": "/wp-json/taw-hub/v1/inventory",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "",
+            "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "canonical_string": "TAW-HUB-v1\nGET\n/wp-json/taw-hub/v1/inventory\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "/8z0CaSrk533nTUgtNe17N/jOmU9IS4d1i3ntE9Pby9bxGThPATbMh9VAIQTzx5+785FErpDO/+klEdRSgEVCw==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "/8z0CaSrk533nTUgtNe17N/jOmU9IS4d1i3ntE9Pby9bxGThPATbMh9VAIQTzx5+785FErpDO/+klEdRSgEVCw=="
+            },
+            "expect": "valid"
+        },
+        {
             "name": "post_framework_sync_ed25519",
             "algo": "ed25519",
             "key_id": "hub-local",
@@ -158,6 +180,28 @@
                 "X-Taw-Hub-Timestamp": "1788134400",
                 "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
                 "X-Taw-Hub-Signature": "El65y7i+cKmU4lQnVrxif0rr9o8ESO6swe9EnwLOroewnOcN/eJNk3tw7aVcnCDfGjAU44V6NSFsX+HMbv02Ag=="
+            },
+            "expect": "valid"
+        },
+        {
+            "name": "response_enrol_ed25519",
+            "algo": "ed25519",
+            "key_id": "hub-local",
+            "method": "RESPONSE",
+            "path": "/api/fleet/enroll",
+            "timestamp": 1788134400,
+            "nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+            "body": "{\"site_id\":12,\"key_id\":\"site-01hbtesttesttesttesttest\",\"hub_key_id\":\"hub-local\",\"status\":\"pending\"}",
+            "body_sha256": "49926cac02725bf8b2a4efc493af0435983c19ce1359bde6050464e29071a904",
+            "canonical_string": "TAW-HUB-v1\nRESPONSE\n/api/fleet/enroll\n1788134400\n9f2c1b7e4a6d40f0a1b2c3d4e5f60718\n49926cac02725bf8b2a4efc493af0435983c19ce1359bde6050464e29071a904",
+            "key_b64": "GX9rI+FshTLGq8g4+s1ep4m+DHaykgM0A5v6iz02jWE=",
+            "signature_b64": "4UjEZqCbiC/6/4MmX0oVdlj+aiBlnATrCdaVaaSFj2f1hcUzOCdhZO+no4DseFQyUboqMwK2tZM3LkdCKztJAw==",
+            "headers": {
+                "X-Taw-Hub-Algo": "ed25519",
+                "X-Taw-Hub-Key-Id": "hub-local",
+                "X-Taw-Hub-Timestamp": "1788134400",
+                "X-Taw-Hub-Nonce": "9f2c1b7e4a6d40f0a1b2c3d4e5f60718",
+                "X-Taw-Hub-Signature": "4UjEZqCbiC/6/4MmX0oVdlj+aiBlnATrCdaVaaSFj2f1hcUzOCdhZO+no4DseFQyUboqMwK2tZM3LkdCKztJAw=="
             },
             "expect": "valid"
         },

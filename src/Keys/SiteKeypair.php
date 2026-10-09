@@ -112,6 +112,33 @@ final class SiteKeypair
     }
 
     /**
+     * The first keypair, created race-free: `add_option` is an INSERT, so of
+     * two concurrent first requests (an mu-plugin never gets an activation
+     * hook) only one stores its secret, and the other adopts it. The public
+     * half is always derived from the stored secret.
+     *
+     * @return array{secret: non-empty-string, public: non-empty-string}
+     */
+    private function claimFirst(): array
+    {
+        $secret = sodium_crypto_sign_secretkey(sodium_crypto_sign_keypair());
+        if (!add_option(self::OPT_SECRET, base64_encode($secret), '', false)) {
+            $stored = get_option(self::OPT_SECRET);
+            $decoded = is_string($stored) ? base64_decode($stored, true) : false;
+            if ($decoded !== false && $decoded !== '') {
+                $secret = $decoded;
+            } else {
+                update_option(self::OPT_SECRET, base64_encode($secret), false);
+            }
+        }
+        $public = sodium_crypto_sign_publickey_from_secretkey($secret);
+        update_option(self::OPT_PUBLIC, base64_encode($public), false);
+        add_option(self::OPT_KEY_ID, 'site-' . bin2hex(random_bytes(8)), '', false);
+
+        return $this->cache = ['secret' => $secret, 'public' => $public];
+    }
+
+    /**
      * @return array{secret: non-empty-string, public: non-empty-string}
      */
     private function material(): array
@@ -125,8 +152,12 @@ final class SiteKeypair
         $secret = is_string($storedSecret) ? base64_decode($storedSecret, true) : false;
         $public = is_string($storedPublic) ? base64_decode($storedPublic, true) : false;
 
-        if ($secret === false || $public === false || $secret === '' || $public === '') {
-            return $this->generate();
+        if ($secret === false || $secret === '') {
+            return $this->claimFirst();
+        }
+        if ($public === false || $public === '') {
+            $public = sodium_crypto_sign_publickey_from_secretkey($secret);
+            update_option(self::OPT_PUBLIC, base64_encode($public), false);
         }
 
         return $this->cache = ['secret' => $secret, 'public' => $public];
