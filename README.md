@@ -1,11 +1,16 @@
 # TAW Hub Companion
 
-The signed `wp-json/taw-hub/v1/` receiver a TAW-framework WordPress site exposes to the
-[**TAW Hub**](https://github.com/Relmaur/taw-hub) control hub. No passwords — every request
-is verified against the Hub's Ed25519 key per the Hub's
-[**ADR-0003**](https://github.com/Relmaur/taw-hub/blob/main/docs/ADR/0003-wire-protocol-and-signatures.md)
-wire protocol. Plugin architecture:
-[**ADR-0005**](https://github.com/Relmaur/taw-hub/blob/main/docs/ADR/0005-companion-plugin-architecture.md).
+The signed `wp-json/taw-hub/v1/` receiver a TAW-framework WordPress site exposes to
+[**taw-fleet**](https://github.com/Relmaur/taw-fleet) (`taw-fleet live`). No passwords: every
+request is verified against a trusted Ed25519 key per the
+[**wire protocol**](docs/reference/wire-protocol.md)
+([ADR-0003](docs/adr/0003-wire-protocol-and-signatures.md); test vectors in
+[`docs/reference/hub-signing-vectors.json`](docs/reference/hub-signing-vectors.json)). Plugin
+architecture: [ADR-0005](docs/adr/0005-companion-plugin-architecture.md).
+
+> The original client, the taw-hub control hub, was retired on 2026-10-08 (archived at
+> `Relmaur/taw-hub`); taw-fleet reads the sites directly. The protocol, route names and
+> `TAW_HUB_*` constants keep their names.
 
 > Was briefly `TAW\Hub` inside `taw/core` v1.20.0. That was the wrong home (theme framework
 > ≠ fleet-management control plane) and the wrong protocol (independently invented, not
