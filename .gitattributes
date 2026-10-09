@@ -11,3 +11,4 @@
 /phpunit.xml        export-ignore
 /composer.lock      export-ignore
 /.phpunit.result.cache export-ignore
+/docs               export-ignore
