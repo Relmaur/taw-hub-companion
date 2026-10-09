@@ -11,7 +11,30 @@ wire protocol. Plugin architecture:
 > ≠ fleet-management control plane) and the wrong protocol (independently invented, not
 > ADR-0003). Reverted in `taw/core` v1.20.1; rebuilt here.
 
-## Install
+## Install on a TAW site: with the theme, as an mu-plugin (0.3.0+)
+
+This is how TAW sites run it now; [taw-fleet](https://github.com/Relmaur/taw-fleet) is the
+client (`taw-fleet live`).
+
+1. In the theme's `composer.json`: the VCS repository
+   `{"type": "vcs", "url": "https://github.com/Relmaur/taw-hub-companion"}`, the requirement
+   `"taw/hub-companion": "^0.3"`, and the key(s) the site trusts:
+
+   ```json
+   "extra": { "taw-companion": { "keys": { "taw-fleet": "…taw-fleet live key show…" } } }
+   ```
+
+   A child theme's keys win over its parent's; the `taw_hub_companion_fleet_keys` filter can
+   add or remove keys. `TAW_HUB_PUBLIC_KEY` in `wp-config.php` still works next to them.
+2. The theme's deploy copies [`mu-loader/taw-companion.php`](mu-loader/taw-companion.php) to
+   `wp-content/mu-plugins/`. That one file loads the companion from the active theme's
+   `vendor/taw/hub-companion/`, never needs updating, and does nothing while the theme has no
+   companion or while the companion is still active as a regular plugin (two copies would mix
+   their classes): remove the regular plugin and the mu copy takes over on the next request.
+3. As an mu-plugin it doesn't self-update; it updates with the theme's `composer.lock`. The
+   site keeps the keypair it already had (same options).
+
+## Install as a regular plugin
 
 1. Drop the plugin in `wp-content/plugins/taw-hub-companion/` and run `composer install`
    (or ship the built plugin with `vendor/` included).
@@ -32,12 +55,13 @@ wire protocol. Plugin architecture:
    `site_public_key` + `site_key_id` (also shown in an admin notice); give those to the
    Hub operator (`RegisterSite`).
 
-Without `TAW_HUB_PUBLIC_KEY` the plugin is **inert** — every route returns `501` and an
+Without a trusted key (`TAW_HUB_PUBLIC_KEY` or a theme key) the plugin is **inert** — every route returns `501` and an
 admin notice explains what to define.
 
 ## Updating
 
-The plugin self-updates from its **GitHub releases** (`Relmaur/taw-hub-companion`) — no SSH,
+As an mu-plugin: with the theme (`composer update taw/hub-companion`, then deploy). As a regular
+plugin, it self-updates from its **GitHub releases** (`Relmaur/taw-hub-companion`) — no SSH,
 no per-site zip upload. From `0.2.0` on (`src/Update/Updater.php`):
 
 - Every site shows the standard **"Update available"** row in *Plugins*, and

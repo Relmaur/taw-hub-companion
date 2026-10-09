@@ -20,7 +20,78 @@ final class Config
 
     public function isConfigured(): bool
     {
-        return $this->hubPublicKey() !== null;
+        return $this->hubPublicKey() !== null || $this->fleetKeys() !== [];
+    }
+
+    /**
+     * Extra trusted Ed25519 keys, by key id: the fleet key(s) the active theme
+     * ships in its `composer.json` (`extra.taw-companion.keys`, child theme
+     * over parent), then the `taw_hub_companion_fleet_keys` filter. They work
+     * next to `TAW_HUB_PUBLIC_KEY`, so a theme deploy can bring taw-fleet's key
+     * with no wp-config edit. Invalid entries are skipped.
+     *
+     * @return array<string, string> key id => 32 raw bytes
+     */
+    public function fleetKeys(): array
+    {
+        $declared = [];
+        if (function_exists('get_template_directory') && function_exists('get_stylesheet_directory')) {
+            foreach (array_unique([get_template_directory(), get_stylesheet_directory()]) as $dir) {
+                $declared = array_merge($declared, self::themeKeys((string) $dir));
+            }
+        }
+        if (function_exists('apply_filters')) {
+            $filtered = apply_filters('taw_hub_companion_fleet_keys', $declared);
+            $declared = is_array($filtered) ? $filtered : $declared;
+        }
+
+        $keys = [];
+        foreach ($declared as $id => $b64) {
+            $raw = self::decodeKey($b64, SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES);
+            if (is_string($id) && preg_match('/^[A-Za-z0-9_\-.:]{1,128}$/', $id) === 1 && $raw !== null) {
+                $keys[$id] = $raw;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @return array<mixed> the `extra.taw-companion.keys` object of a theme's composer.json
+     */
+    private static function themeKeys(string $dir): array
+    {
+        $file = rtrim($dir, '/') . '/composer.json';
+        if ($dir === '' || !is_readable($file)) {
+            return [];
+        }
+        $json = json_decode((string) file_get_contents($file), true);
+        $extra = is_array($json) && is_array($json['extra'] ?? null) ? $json['extra'] : [];
+        $ours = is_array($extra['taw-companion'] ?? null) ? $extra['taw-companion'] : [];
+
+        return is_array($ours['keys'] ?? null) ? $ours['keys'] : [];
+    }
+
+    /**
+     * Whether this copy runs as an mu-plugin: loaded from `mu-plugins/` or a
+     * theme's `vendor/` (anything outside the plugins folder), or forced with
+     * `TAW_COMPANION_MU`. WordPress can't update mu-plugins, so the
+     * self-updater stays off; updates arrive with the theme.
+     */
+    public function muMode(): bool
+    {
+        if (self::constant('TAW_COMPANION_MU') === true) {
+            return true;
+        }
+        $file = self::constant('TAW_HUB_COMPANION_FILE');
+        $pluginDir = self::constant('WP_PLUGIN_DIR');
+        if (!is_string($file) || !is_string($pluginDir) || $pluginDir === '') {
+            return false;
+        }
+        $real = realpath($file) ?: $file;
+        $plugins = realpath($pluginDir) ?: $pluginDir;
+
+        return !str_starts_with($real, rtrim($plugins, '/') . '/');
     }
 
     /**

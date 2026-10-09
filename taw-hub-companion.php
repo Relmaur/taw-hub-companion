@@ -3,7 +3,7 @@
 /**
  * Plugin Name:       TAW Hub Companion
  * Description:        Signed wp-json/taw-hub/v1 receiver for the TAW Hub control hub. No passwords — every request is verified against the Hub's Ed25519 key per taw-hub ADR-0003.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.4
  * Requires PHP:      8.2
  * Author:            Marco Del Riego
@@ -24,7 +24,15 @@
  * With no TAW_HUB_PUBLIC_KEY the plugin is inert: routes return 501 and an
  * admin notice explains what to define.
  *
- * The plugin self-updates from its GitHub releases (Relmaur/taw-hub-companion):
+ * It also trusts the fleet keys the active theme ships in its composer.json
+ * (`extra.taw-companion.keys`: {"taw-fleet": "…base64…"}), which is how
+ * taw-fleet's key reaches a site with a theme deploy.
+ *
+ * As an mu-plugin (mu-loader/taw-companion.php, which the theme's deploy copies
+ * into wp-content/mu-plugins/ and which loads this file from the theme's
+ * vendor/) it doesn't self-update: it updates with the theme's composer.lock.
+ *
+ * Installed as a regular plugin, it self-updates from its GitHub releases (Relmaur/taw-hub-companion):
  * every site shows the standard "Update available" row, and unless
  * TAW_HUB_COMPANION_AUTO_UPDATE is false it also applies releases through
  * WordPress's background auto-update cron. See src/Update/Updater.php.
@@ -34,6 +42,12 @@ declare(strict_types=1);
 
 if (!defined('ABSPATH')) {
     exit;
+}
+
+// Loaded already (the mu-plugin copy loads first while a regular copy is
+// still installed during the switch): the first copy wins.
+if (defined('TAW_HUB_COMPANION_VERSION')) {
+    return;
 }
 
 if (is_readable(__DIR__ . '/vendor/autoload.php')) {
@@ -50,7 +64,7 @@ if (is_readable(__DIR__ . '/vendor/autoload.php')) {
     });
 }
 
-define('TAW_HUB_COMPANION_VERSION', '0.2.0');
+define('TAW_HUB_COMPANION_VERSION', '0.3.0');
 define('TAW_HUB_COMPANION_FILE', __FILE__);
 
 register_activation_hook(__FILE__, [\TAW\HubCompanion\Plugin::class, 'activate']);

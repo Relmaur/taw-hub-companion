@@ -54,8 +54,15 @@ final class Plugin
         // site's identity (that would silently break the Hub's registration).
     }
 
+    private static bool $booted = false;
+
     public static function boot(): void
     {
+        // Once, even when both the mu-plugin and a leftover regular copy hook in.
+        if (self::$booted) {
+            return;
+        }
+        self::$booted = true;
         $config = new Config();
 
         add_action('admin_notices', [self::class, 'renderAdminNotices']);
@@ -87,7 +94,7 @@ final class Plugin
         $signing = new ResponseSigning($config, new ResponseSigner($keypair));
         add_filter('rest_post_dispatch', [$signing, 'filter'], 10, 3);
 
-        if (defined('TAW_HUB_COMPANION_FILE') && defined('TAW_HUB_COMPANION_VERSION')) {
+        if (!$config->muMode() && defined('TAW_HUB_COMPANION_FILE') && defined('TAW_HUB_COMPANION_VERSION')) {
             (new Updater(
                 (string) constant('TAW_HUB_COMPANION_FILE'),
                 (string) constant('TAW_HUB_COMPANION_VERSION'),
@@ -106,7 +113,7 @@ final class Plugin
         $messages = [];
 
         if (!$config->isConfigured()) {
-            $messages[] = 'TAW Hub Companion is <strong>not configured</strong>. Define <code>TAW_HUB_PUBLIC_KEY</code> in <code>wp-config.php</code> — until then the <code>taw-hub/v1</code> routes return 501.';
+            $messages[] = 'TAW Hub Companion is <strong>not configured</strong>: no trusted key. Ship taw-fleet\'s key in the theme\'s <code>composer.json</code> (<code>extra.taw-companion.keys</code>) or define <code>TAW_HUB_PUBLIC_KEY</code> in <code>wp-config.php</code>; until then the <code>taw-hub/v1</code> routes return 501.';
         }
 
         if (function_exists('rest_get_url_prefix') && rest_get_url_prefix() !== $config->restPrefix()) {
