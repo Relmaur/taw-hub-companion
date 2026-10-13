@@ -79,11 +79,11 @@ final class SigningVectorsTest extends TestCase
     public function test_canonical_string_matches(array $v): void
     {
         $built = $v['method'] === 'RESPONSE'
-            ? CanonicalString::forResponse((string) $v['path'], (string) $v['body'], (int) $v['timestamp'], (string) $v['nonce'])
-            : CanonicalString::forRequest((string) $v['method'], (string) $v['path'], (string) $v['body'], (int) $v['timestamp'], (string) $v['nonce']);
+            ? CanonicalString::forResponse((string) $v['path'], self::body($v), (int) $v['timestamp'], (string) $v['nonce'])
+            : CanonicalString::forRequest((string) $v['method'], (string) $v['path'], self::body($v), (int) $v['timestamp'], (string) $v['nonce']);
 
         $this->assertSame($v['canonical_string'], $built);
-        $this->assertSame($v['body_sha256'], hash('sha256', (string) $v['body']));
+        $this->assertSame($v['body_sha256'], hash('sha256', self::body($v)));
     }
 
     /**
@@ -123,7 +123,7 @@ final class SigningVectorsTest extends TestCase
             static fn (string $n): string => $headers[$n] ?? '',
         );
 
-        $verify = fn () => $gate->verify((string) $v['method'], (string) $v['path'], (string) $v['body'], $parsed);
+        $verify = fn () => $gate->verify((string) $v['method'], (string) $v['path'], self::body($v), $parsed);
 
         if ($v['expect'] === 'valid') {
             $verify();
@@ -157,7 +157,7 @@ final class SigningVectorsTest extends TestCase
 
         $canonical = CanonicalString::forResponse(
             (string) $v['path'],
-            (string) $v['body'],
+            self::body($v),
             (int) $v['timestamp'],
             (string) $v['nonce'],
         );
@@ -169,5 +169,29 @@ final class SigningVectorsTest extends TestCase
             (string) base64_decode((string) $v['key_b64'], true),
         );
         $this->assertTrue($ok, 'the RESPONSE signature must verify against our canonical');
+    }
+
+    public function test_the_docs_copy_is_the_same_file(): void
+    {
+        $this->assertFileEquals(__DIR__ . '/../../fixtures/hub-signing-vectors.json', __DIR__ . '/../../../docs/reference/hub-signing-vectors.json',
+            'scripts/gen-signing-vectors.php writes tests/fixtures/; copy it to docs/reference/ (and taw-fleet)');
+    }
+
+    public function test_the_publish_routes_have_vectors(): void
+    {
+        $names = array_map(static fn (array $c): string => (string) $c[0]['name'], iterator_to_array(self::allVectors()));
+        foreach (['post_publish_plan_ed25519', 'put_publish_media_ed25519', 'post_publish_apply_ed25519'] as $name) {
+            $this->assertContains($name, $names);
+        }
+    }
+
+    /**
+     * A vector's body: `body`, or `body_b64` for a binary one (a publish file upload).
+     *
+     * @param array<string, mixed> $v
+     */
+    private static function body(array $v): string
+    {
+        return isset($v['body_b64']) && is_string($v['body_b64']) ? (string) base64_decode($v['body_b64'], true) : (string) $v['body'];
     }
 }

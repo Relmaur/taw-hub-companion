@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TAW\HubCompanion\Telemetry;
 
 use TAW\HubCompanion\Cli\TawRunner;
+use TAW\HubCompanion\Config;
 use TAW\HubCompanion\Keys\SiteKeypair;
 
 if (!defined('ABSPATH')) {
@@ -21,11 +22,13 @@ if (!defined('ABSPATH')) {
  * convenience (Part 6: "public key surfaced via /health for Hub registration").
  * `exec_available` is false on hosts that disable `proc_open` (most managed
  * WordPress hosts) — the Hub uses it to skip `/framework/sync` and `/taw` for
- * that site. COORDINATION (ADR-0005): `HealthSnapshot` ignores unknown keys.
+ * that site. `publish_enabled` / `publish_available` say whether taw-fleet can
+ * publish content here (the theme's opt-in; taw/core 1.98+). COORDINATION
+ * (ADR-0005): `HealthSnapshot` ignores unknown keys.
  */
 final class HealthReport
 {
-    public function __construct(private SiteKeypair $keypair)
+    public function __construct(private SiteKeypair $keypair, private ?Config $config = null)
     {
     }
 
@@ -45,6 +48,9 @@ final class HealthReport
             'site_public_key'   => $this->keypair->publicKeyBase64(),
             'site_key_id'       => $this->keypair->keyId(),
             'exec_available'    => TawRunner::available(),
+            // Publishing (ADR-0006): whether the theme allows it, and whether taw/core can do it.
+            'publish_enabled'   => $this->config !== null && $this->config->publishEnabled(),
+            'publish_available' => PublishReport::available(),
         ];
     }
 

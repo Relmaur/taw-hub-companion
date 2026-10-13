@@ -17,6 +17,7 @@ use TAW\HubCompanion\Rest\HealthController;
 use TAW\HubCompanion\Rest\InventoryController;
 use TAW\HubCompanion\Rest\KeysController;
 use TAW\HubCompanion\Rest\LogsController;
+use TAW\HubCompanion\Rest\PublishController;
 use TAW\HubCompanion\Rest\Routes;
 use TAW\HubCompanion\Rest\TawController;
 use TAW\HubCompanion\Rest\VulnerabilitiesController;
@@ -25,6 +26,7 @@ use TAW\HubCompanion\Telemetry\ChecksumReport;
 use TAW\HubCompanion\Telemetry\ContentReport;
 use TAW\HubCompanion\Telemetry\HealthReport;
 use TAW\HubCompanion\Telemetry\InventoryReport;
+use TAW\HubCompanion\Telemetry\PublishReport;
 use TAW\HubCompanion\Update\Updater;
 use TAW\HubCompanion\Wire\KeyRing;
 use TAW\HubCompanion\Wire\ResponseSigner;
@@ -82,7 +84,7 @@ final class Plugin
 
         $routes = new Routes(
             $guard,
-            new HealthController(new HealthReport($keypair)),
+            new HealthController(new HealthReport($keypair, $config)),
             new InventoryController(new InventoryReport()),
             new ChecksumsController(new ChecksumReport()),
             new VulnerabilitiesController(ScannerRegistry::default()),
@@ -91,6 +93,7 @@ final class Plugin
             new FrameworkSyncController($runner),
             new TawController($runner),
             new KeysController($keypair),
+            new PublishController($config, new PublishReport()),
         );
         add_action('rest_api_init', [$routes, 'register']);
 

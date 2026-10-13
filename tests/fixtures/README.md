@@ -10,8 +10,10 @@ plus a deliberately-tampered case.
 canonical strings, request verification through `SignatureGate`, and the `RESPONSE`
 direction.
 
-**Re-copy this file** whenever the Hub regenerates it (which only happens on a
-`TAW-HUB-v1` → `v2` canonical change, gated by a new ADR).
+Since 0.5.0 (taw-hub is retired) `scripts/gen-signing-vectors.php` here adds the publish routes'
+vectors (ADR-0006), signed with the file's own test keys; the vectors that came from the Hub stay byte
+for byte. A binary body is `body_b64`. Copy the file to `docs/reference/` and to taw-fleet's
+`internal/companion/testdata/` after running it: each place checks it's identical.
 
 ---
 

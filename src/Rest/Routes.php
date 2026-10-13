@@ -24,6 +24,8 @@ if (!defined('ABSPATH')) {
  *   POST /framework/sync   {"dry_run": bool}
  *   POST /taw              {"command": string, "args": string[]}
  *   POST /keys/rotate
+ *   POST /content/publish/plan, PUT /content/publish/{id}/media, POST /content/publish/{id}/apply,
+ *   GET  /content/publish/journals, POST /content/publish/undo   (ADR-0006; off unless the theme enables it)
  */
 final class Routes
 {
@@ -38,6 +40,7 @@ final class Routes
         private FrameworkSyncController $frameworkSync,
         private TawController $taw,
         private KeysController $keys,
+        private PublishController $publish,
     ) {
     }
 
@@ -97,6 +100,36 @@ final class Routes
         register_rest_route($ns, '/keys/rotate', [
             'methods'             => 'POST',
             'callback'            => [$this->keys, 'handle'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/content/publish/plan', [
+            'methods'             => 'POST',
+            'callback'            => [$this->publish, 'plan'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/content/publish/(?P<id>[a-f0-9]{16})/media', [
+            'methods'             => 'PUT',
+            'callback'            => [$this->publish, 'media'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/content/publish/(?P<id>[a-f0-9]{16})/apply', [
+            'methods'             => 'POST',
+            'callback'            => [$this->publish, 'apply'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/content/publish/journals', [
+            'methods'             => 'GET',
+            'callback'            => [$this->publish, 'journals'],
+            'permission_callback' => $guard,
+        ]);
+
+        register_rest_route($ns, '/content/publish/undo', [
+            'methods'             => 'POST',
+            'callback'            => [$this->publish, 'undo'],
             'permission_callback' => $guard,
         ]);
     }

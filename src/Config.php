@@ -61,15 +61,73 @@ final class Config
      */
     private static function themeKeys(string $dir): array
     {
+        $ours = self::themeExtra($dir);
+
+        return is_array($ours['keys'] ?? null) ? $ours['keys'] : [];
+    }
+
+    /**
+     * @return array<mixed> the `extra.taw-companion` object of a theme's composer.json
+     */
+    private static function themeExtra(string $dir): array
+    {
         $file = rtrim($dir, '/') . '/composer.json';
         if ($dir === '' || !is_readable($file)) {
             return [];
         }
         $json = json_decode((string) file_get_contents($file), true);
         $extra = is_array($json) && is_array($json['extra'] ?? null) ? $json['extra'] : [];
-        $ours = is_array($extra['taw-companion'] ?? null) ? $extra['taw-companion'] : [];
 
-        return is_array($ours['keys'] ?? null) ? $ours['keys'] : [];
+        return is_array($extra['taw-companion'] ?? null) ? $extra['taw-companion'] : [];
+    }
+
+    /**
+     * Whether taw-fleet may publish content to this site (`/content/publish/*`,
+     * ADR-0006): off unless the active theme's composer.json says
+     * `extra.taw-companion.publish: true` (the child theme's word over the
+     * parent's), so it's enabled by a reviewed commit and a deploy, never from
+     * outside. The `taw_hub_companion_publish_enabled` filter has the last word.
+     */
+    public function publishEnabled(): bool
+    {
+        $enabled = false;
+        if (function_exists('get_template_directory') && function_exists('get_stylesheet_directory')) {
+            // Parent first, then the child, whose word wins when it has one.
+            foreach (array_unique([get_template_directory(), get_stylesheet_directory()]) as $dir) {
+                $extra = self::themeExtra((string) $dir);
+                if (array_key_exists('publish', $extra)) {
+                    $enabled = $extra['publish'] === true;
+                }
+            }
+        }
+        if (function_exists('apply_filters')) {
+            $enabled = (bool) apply_filters('taw_hub_companion_publish_enabled', $enabled);
+        }
+
+        return $enabled;
+    }
+
+    /**
+     * A publish's limits: per file, per publish and how long a planned
+     * publish waits. Constants in wp-config.php change them
+     * (`TAW_HUB_PUBLISH_MAX_FILE_MB`, `…_MAX_TOTAL_MB`, `…_MAX_FILES`, `…_TTL_MIN`).
+     *
+     * @return array{max_file_bytes: int, max_total_bytes: int, max_files: int, ttl: int, max_plan_bytes: int}
+     */
+    public function publishLimits(): array
+    {
+        $int = static function (string $name, int $default): int {
+            $value = self::constant($name);
+            return is_numeric($value) && (int) $value > 0 ? (int) $value : $default;
+        };
+
+        return [
+            'max_file_bytes'  => $int('TAW_HUB_PUBLISH_MAX_FILE_MB', 32) * 1024 * 1024,
+            'max_total_bytes' => $int('TAW_HUB_PUBLISH_MAX_TOTAL_MB', 512) * 1024 * 1024,
+            'max_files'       => $int('TAW_HUB_PUBLISH_MAX_FILES', 500),
+            'ttl'             => $int('TAW_HUB_PUBLISH_TTL_MIN', 60) * 60,
+            'max_plan_bytes'  => 48 * 1024 * 1024,
+        ];
     }
 
     /**
