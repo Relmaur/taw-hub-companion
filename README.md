@@ -23,7 +23,7 @@ client (`taw-fleet live`).
 
 1. In the theme's `composer.json`: the VCS repository
    `{"type": "vcs", "url": "https://github.com/Relmaur/taw-hub-companion"}`, the requirement
-   `"taw/hub-companion": "^0.3"`, and the key(s) the site trusts:
+   `"taw/hub-companion": "^0.5"`, and the key(s) the site trusts:
 
    ```json
    "extra": { "taw-companion": { "keys": { "taw-fleet": "…taw-fleet live key show…" } } }
@@ -88,7 +88,7 @@ the release zip, or `git pull` a checkout), and it self-maintains after that.
 
 | Method | Route | Body / query | Returns |
 |---|---|---|---|
-| `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id, exec_available }` |
+| `GET` | `/health` | — | `{ ok, php_version, wp_version, taw_core_version, companion_version, site_public_key, site_key_id, exec_available, publish_enabled, publish_available }` |
 | `GET` | `/inventory` | — | `{ schema_version, generated_at, wp_version, wp_locale, wp_multisite, php_version, plugins:[…], mu_plugins:[…], dropins:[…], themes:[…] }` — a security-focused SBOM |
 | `GET` | `/inventory/checksums` | `?slug&type` | `{ schema_version, generated_at, mode, components:[…] }` — per-component SHA-256 file manifest |
 | `GET` | `/vulnerabilities` | — | `{ scanner, count, findings:[…] }` — the site scanner's findings, normalized |
@@ -97,6 +97,11 @@ the release zip, or `git pull` a checkout), and it self-maintains after that.
 | `POST` | `/framework/sync` | `{ "dry_run": bool }` | the `php bin/taw sync --json` report verbatim |
 | `POST` | `/taw` | `{ "command": string, "args": string[] }` | `{ exit_code, stdout, stderr }` — allow-listed commands only |
 | `POST` | `/keys/rotate` | — | `{ "public_key": "<base64>" }` — new keypair, same key id |
+| `POST` | `/content/publish/plan` | a change-set with its base (taw/core 1.98) | `{ publish_id, token, expires_at, plan, media: { needed: [...] }, limits }`: the field-level plan, the files this site lacks, a one-time token (0.5.0+) |
+| `PUT` | `/content/publish/{id}/media` | one file's raw bytes (`application/octet-stream`) | `{ staged: { file, sha256, bytes }, remaining }` |
+| `POST` | `/content/publish/{id}/apply` | `{ token, approved: [{key, hash}], keep: {…}, take: {…} }` | `{ report, applied }`: taw/core's import report (journal, rollback path) |
+| `GET` | `/content/publish/journals` | — | `{ journals: [...] }`: every import and publish, newest first |
+| `POST` | `/content/publish/undo` | `{ journal, dry_run }` | what undo would do (`dry_run`, the default) or did |
 
 `/inventory` is a read-only, subprocess-free software bill of materials — every plugin,
 must-use plugin, drop-in and theme with the metadata the Hub needs to correlate the fleet
@@ -188,6 +193,35 @@ not reinvent the per-site sync logic.
 to `bin/taw` and can't run. `/health` (which reports `"exec_available": false`) and `/logs`
 work everywhere; they never spawn a subprocess. Run framework sync via the theme's own
 `framework-sync.yml` GitHub Action on those hosts.
+
+### Publishing content (0.5.0, ADR-0006)
+
+taw-fleet publishes a site's Local content to production through the `/content/publish/*` routes. **Off by
+default:** every one answers `403 publish_disabled` until the active theme's `composer.json` says so, by a reviewed
+commit and a deploy:
+
+```json
+"extra": { "taw-companion": { "keys": { "taw-fleet": "…" }, "publish": true } }
+```
+
+The child theme's word wins over the parent's; the `taw_hub_companion_publish_enabled` filter has the last word.
+taw/core 1.98+ does the work (`TAW\Core\Content\Publish`; `501 publish_unavailable` without it):
+
+1. **Plan** (a change-set made against production's own snapshot) writes nothing but a pending folder in
+   `uploads/taw-private` and answers the field-level plan (each change with its field's label, and whether
+   production changed it too since), the files production lacks, and a one-time token.
+2. **Files** go up one per request, as signed raw bodies, and are accepted only when their sha256 is one the plan
+   asked for. Nothing is ever downloaded from the client.
+3. **Apply** names each approved record with the hash it had in the plan; production plans them again and refuses
+   if any moved (`409 publish_moved`), if a value both sides changed wasn't decided
+   (`409 publish_conflicts_unresolved`), or a file is missing (`409 publish_media_missing`). Then the token is
+   spent and the records imported as the first administrator, after the rollback snapshot and journal.
+4. **Undo** reverses a publish from its journal, values edited since kept; a dry run first.
+
+Users, comments and site settings are never published, and no database file travels. Limits: 32 MB per file,
+512 MB and 500 files per publish, an hour to apply, one apply at a time; `TAW_HUB_PUBLISH_MAX_FILE_MB`,
+`TAW_HUB_PUBLISH_MAX_TOTAL_MB`, `TAW_HUB_PUBLISH_MAX_FILES` and `TAW_HUB_PUBLISH_TTL_MIN` in `wp-config.php` change
+them. Every step is logged (`content.publish.*`, through `/logs`).
 
 ## The wire protocol (ADR-0003)
 
